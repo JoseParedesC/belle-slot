@@ -1,1 +1,0 @@
-export const DURACION_BLOQUE_DEFAULT_MINUTOS = 30;
