@@ -1,0 +1,86 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #fdf6f8;
+  margin: 0;
+  padding: 2rem;
+}
+
+.pagina-reservar {
+  max-width: 480px;
+  margin: 0 auto;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.lista-servicios, .lista-disenos, .lista-horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.lista-servicios button, .lista-disenos button, .lista-horarios button {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e5c6cf;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.lista-servicios button.activo, .lista-disenos button.activo, .lista-horarios button.activo {
+  background: #f7a8b8;
+  color: white;
+  border-color: #f7a8b8;
+}
+
+.banner-aviso-precio {
+  background: #fff3cd;
+  border: 1px solid #ffe08a;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.datos-cliente input {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.6rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tabla-reservas {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.tabla-reservas th, .tabla-reservas td {
+  border-bottom: 1px solid #eee;
+  padding: 0.5rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.tabla-reservas button {
+  margin-right: 0.4rem;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+}
