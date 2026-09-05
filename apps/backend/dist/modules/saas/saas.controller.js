@@ -21,6 +21,11 @@ exports.saasRouter.get('/empresas', async (_req, res) => {
                 horarioCierre: true,
                 diasAtencion: true,
                 textoBannerPrecio: true,
+                colorPrimario: true,
+                colorSecundario: true,
+                colorAcento: true,
+                colorFondo: true,
+                personalizacion: true,
                 plan: true,
                 _count: {
                     select: {
@@ -69,7 +74,7 @@ exports.saasRouter.get('/empresas/:slug', async (req, res) => {
 // POST /api/saas/empresas -> On-boarding / Registro de un nuevo salón
 exports.saasRouter.post('/empresas', async (req, res) => {
     try {
-        const { nombre, slug: inputSlug, direccion, telefonoWhatsapp, emailContacto, horarioApertura = '09:00', horarioCierre = '18:00', diasAtencion = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'], duracionBloqueMinutos = 30, horasAnticipacionCancelacion = 12, textoBannerPrecio, adminNombre, adminEmail, } = req.body;
+        const { nombre, slug: inputSlug, direccion, telefonoWhatsapp, emailContacto, horarioApertura = '09:00', horarioCierre = '18:00', diasAtencion = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'], duracionBloqueMinutos = 30, horasAnticipacionCancelacion = 12, textoBannerPrecio, colorPrimario = '#d94676', colorSecundario = '#8c1e40', colorAcento = '#c29057', colorFondo = '#faf6f8', personalizacion, adminNombre, adminEmail, } = req.body;
         if (!nombre || !nombre.trim()) {
             return res.status(400).json({ error: 'El nombre del salón es obligatorio' });
         }
@@ -105,6 +110,11 @@ exports.saasRouter.post('/empresas', async (req, res) => {
                     horasAnticipacionCancelacion: Number(horasAnticipacionCancelacion) || 12,
                     textoBannerPrecio: textoBannerPrecio ||
                         'Precios base del salón. El costo final puede variar según personalizaciones o diseños.',
+                    colorPrimario,
+                    colorSecundario,
+                    colorAcento,
+                    colorFondo,
+                    personalizacion: personalizacion || undefined,
                     plan: 'pro',
                     activo: true,
                 },

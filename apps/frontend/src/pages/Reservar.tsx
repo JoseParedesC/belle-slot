@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Sparkles, Heart, Shield, Clock, MapPin, Phone, Calendar as CalendarIcon, MessageCircle } from 'lucide-react';
 import { Servicio, Configuracion } from '../types';
 import { obtenerServicios, obtenerConfiguracion } from '../services/api';
 import { CalendarioMensual } from '../components/calendario/CalendarioMensual';
 import { ModalReserva } from '../components/modal-reserva/ModalReserva';
 import { SelectorServicio } from '../components/selector-servicio/SelectorServicio';
+import { useEmpresa } from '../context/EmpresaContext';
 
 export function Reservar() {
+  const { slug } = useParams<{ slug?: string }>();
+  const { empresaActual } = useEmpresa();
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | undefined>();
@@ -14,7 +18,9 @@ export function Reservar() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [cargandoServicios, setCargandoServicios] = useState(true);
 
+  // Recargar servicios y configuración cada vez que cambia el salón activo o el slug de la ruta
   useEffect(() => {
+    setCargandoServicios(true);
     obtenerConfiguracion().then(setConfig).catch(console.error);
 
     obtenerServicios()
@@ -22,16 +28,25 @@ export function Reservar() {
         setServicios(data || []);
         if (data && data.length > 0) {
           setServicioSeleccionado(data[0]);
+        } else {
+          setServicioSeleccionado(undefined);
         }
       })
       .catch(console.error)
       .finally(() => setCargandoServicios(false));
-  }, []);
+  }, [empresaActual?.id, empresaActual?.slug, slug]);
 
   const handleSeleccionarDia = (fechaStr: string) => {
     setDiaSeleccionado(fechaStr);
     setModalAbierto(true);
   };
+
+  const nombreSalon = empresaActual?.nombre || config?.nombreNegocio || 'Belle Slot';
+  const direccionSalon = empresaActual?.direccion || config?.direccion || 'Centro Comercial Plaza Belle, Local 204';
+  const telWhatsapp = empresaActual?.telefonoWhatsapp || config?.telefonoWhatsapp;
+  const diasAtencion = empresaActual?.diasAtencion || config?.diasAtencion;
+  const horaApertura = empresaActual?.horarioApertura || config?.horarioApertura || '09:00';
+  const horaCierre = empresaActual?.horarioCierre || config?.horarioCierre || '18:00';
 
   return (
     <div className="pagina-principal-layout">
@@ -42,7 +57,7 @@ export function Reservar() {
             <Sparkles size={16} /> Experiencia & Belleza de Uñas
           </div>
           <h1 className="hero-title">
-            Reserva tu Cita en <span className="highlight-text">{config?.nombreNegocio || 'Belle Slot'}</span>
+            Reserva tu Cita en <span className="highlight-text">{nombreSalon}</span>
           </h1>
           <p className="hero-description">
             Elige el día que prefieras en nuestro calendario mensual. Al hacer clic en una fecha,
@@ -104,8 +119,8 @@ export function Reservar() {
           <div className="info-strip-card">
             <MapPin size={22} className="strip-icon" />
             <div>
-              <strong>Ubicación de {config?.nombreNegocio || 'Belle Slot'}</strong>
-              <p>{config?.direccion || 'Centro Comercial Plaza Belle, Local 204'}</p>
+              <strong>Ubicación de {nombreSalon}</strong>
+              <p>{direccionSalon}</p>
             </div>
           </div>
 
@@ -114,10 +129,10 @@ export function Reservar() {
             <div>
               <strong>Horario de Atención</strong>
               <p>
-                {config?.diasAtencion && config.diasAtencion.length > 0
-                  ? `${config.diasAtencion[0]} a ${config.diasAtencion[config.diasAtencion.length - 1]}`
+                {diasAtencion && diasAtencion.length > 0
+                  ? `${diasAtencion[0]} a ${diasAtencion[diasAtencion.length - 1]}`
                   : 'Lunes a Sábado'}{' '}
-                · {config?.horarioApertura || '09:00'} a {config?.horarioCierre || '18:00'} hrs
+                · {horaApertura} a {horaCierre} hrs
               </p>
             </div>
           </div>
@@ -126,17 +141,17 @@ export function Reservar() {
             <Phone size={22} className="strip-icon" />
             <div>
               <strong>Consultas por WhatsApp</strong>
-              {config?.telefonoWhatsapp ? (
+              {telWhatsapp ? (
                 <a
-                  href={`https://wa.me/${config.telefonoWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-                    `Hola, me comunico desde el sitio web de ${config.nombreNegocio || 'Belle Slot'}`
+                  href={`https://wa.me/${telWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Hola, me comunico desde el sitio web de ${nombreSalon}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
                   className="whatsapp-contact-link"
                 >
                   <MessageCircle size={15} />
-                  <span>{config.telefonoWhatsapp}</span>
+                  <span>{telWhatsapp}</span>
                 </a>
               ) : (
                 <p>No configurado</p>

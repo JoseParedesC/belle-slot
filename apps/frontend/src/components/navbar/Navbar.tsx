@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Calendar, User, LogOut, Scissors, Clock, ClipboardList } from 'lucide-react';
+import { Sparkles, Calendar, User, LogOut, Scissors, Clock, ClipboardList, Store } from 'lucide-react';
 import { Usuario, Configuracion } from '../../types';
 import { obtenerUsuarioActual, cerrarSesion, obtenerConfiguracion } from '../../services/api';
 import { GoogleLoginModal } from '../auth/GoogleLoginModal';
+import { useEmpresa } from '../../context/EmpresaContext';
+import { TenantSwitcher } from './TenantSwitcher';
 
 export function Navbar() {
+  const { empresaActual } = useEmpresa();
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [modalAuthAbierto, setModalAuthAbierto] = useState(false);
@@ -19,7 +22,7 @@ export function Navbar() {
 
   useEffect(() => {
     obtenerConfiguracion().then(setConfig).catch(console.error);
-  }, []);
+  }, [empresaActual?.id]);
 
   const handleLogout = () => {
     cerrarSesion();
@@ -33,44 +36,68 @@ export function Navbar() {
     setModalAuthAbierto(true);
   };
 
+  const rutaBase = empresaActual ? `/${empresaActual.slug}` : '';
+  const esSuite = location.pathname === '/' || location.pathname === '/explorar' || location.pathname === '/salones';
+
   return (
     <>
       <header className="navbar-container">
         <div className="navbar-inner">
-          <Link to="/" className="navbar-brand">
-            <span className="brand-icon">
-              <Sparkles size={20} />
-            </span>
-            <div className="brand-text">
-              <span className="brand-title">{config?.nombreNegocio || 'Belle Slot'}</span>
-              <span className="brand-subtitle">Nail Bar & Studio</span>
-            </div>
-          </Link>
+          <div className="navbar-left-brand-group">
+            <Link to={esSuite ? '/' : (rutaBase || '/')} className="navbar-brand">
+              <span className="brand-icon">
+                <Sparkles size={20} />
+              </span>
+              <div className="brand-text">
+                <span className="brand-title">
+                  {esSuite ? 'Belle Slot Suite' : (empresaActual?.nombre || config?.nombreNegocio || 'Belle Slot')}
+                </span>
+                <span className="brand-subtitle">
+                  {esSuite ? 'Red de Salones & Spas' : 'Nail Bar & Studio'}
+                </span>
+              </div>
+            </Link>
+            <TenantSwitcher />
+          </div>
 
           <nav className="navbar-nav">
-            <Link
-              to="/"
-              className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-            >
-              <Calendar size={17} />
-              <span>Reservar Cita</span>
-            </Link>
+            {esSuite ? (
+              <Link to="/" className="nav-link active">
+                <Store size={17} />
+                <span>Directorio de Salones</span>
+              </Link>
+            ) : (
+              <>
+                <Link to="/" className="nav-link suite-hub-nav-link" title="Volver a la Suite de Salones">
+                  <Store size={16} />
+                  <span>Suite</span>
+                </Link>
 
-            <Link
-              to="/estilistas"
-              className={`nav-link ${location.pathname === '/estilistas' ? 'active' : ''}`}
-            >
-              <Scissors size={17} />
-              <span>Agenda Estilistas</span>
-            </Link>
+                <Link
+                  to={rutaBase || '/'}
+                  className={`nav-link ${location.pathname === rutaBase ? 'active' : ''}`}
+                >
+                  <Calendar size={17} />
+                  <span>Reservar Cita</span>
+                </Link>
 
-            <Link
-              to="/mis-citas"
-              className={`nav-link ${location.pathname === '/mis-citas' ? 'active' : ''}`}
-            >
-              <Clock size={17} />
-              <span>Mis Citas</span>
-            </Link>
+                <Link
+                  to={`${rutaBase}/estilistas`}
+                  className={`nav-link ${location.pathname.endsWith('/estilistas') ? 'active' : ''}`}
+                >
+                  <Scissors size={17} />
+                  <span>Agenda Estilistas</span>
+                </Link>
+
+                <Link
+                  to={`${rutaBase}/mis-citas`}
+                  className={`nav-link ${location.pathname.endsWith('/mis-citas') ? 'active' : ''}`}
+                >
+                  <Clock size={17} />
+                  <span>Mis Citas</span>
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="navbar-auth">
@@ -112,6 +139,13 @@ export function Navbar() {
                         <Scissors size={15} /> Ver mi agenda
                       </Link>
                     )}
+                    <Link
+                      to="/"
+                      className="dropdown-item"
+                      onClick={() => setMenuAbierto(false)}
+                    >
+                      <Store size={15} /> Suite de Salones (Directorio)
+                    </Link>
                     <Link
                       to="/admin/calendario"
                       className="dropdown-item"

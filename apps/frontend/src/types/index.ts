@@ -12,6 +12,11 @@ export interface Empresa {
   duracionBloqueMinutos?: number;
   horasAnticipacionCancelacion?: number;
   textoBannerPrecio?: string | null;
+  colorPrimario?: string | null;
+  colorSecundario?: string | null;
+  colorAcento?: string | null;
+  colorFondo?: string | null;
+  personalizacion?: any;
   plan?: string;
   activo?: boolean;
   _count?: {
@@ -50,6 +55,11 @@ export interface Configuracion {
   duracionBloqueMinutos?: number;
   horasAnticipacionCancelacion?: number;
   textoBannerPrecio?: string;
+  colorPrimario?: string;
+  colorSecundario?: string;
+  colorAcento?: string;
+  colorFondo?: string;
+  personalizacion?: any;
 }
 
 export interface DatosCliente {

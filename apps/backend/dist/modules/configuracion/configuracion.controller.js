@@ -27,6 +27,11 @@ exports.configuracionRouter.get('/', async (req, res) => {
                 duracionBloqueMinutos: fallback.duracionBloqueMinutos,
                 horasAnticipacionCancelacion: fallback.horasAnticipacionCancelacion,
                 textoBannerPrecio: fallback.textoBannerPrecio,
+                colorPrimario: fallback.colorPrimario,
+                colorSecundario: fallback.colorSecundario,
+                colorAcento: fallback.colorAcento,
+                colorFondo: fallback.colorFondo,
+                personalizacion: fallback.personalizacion,
             });
         }
         res.json({
@@ -43,6 +48,11 @@ exports.configuracionRouter.get('/', async (req, res) => {
             duracionBloqueMinutos: empresa.duracionBloqueMinutos,
             horasAnticipacionCancelacion: empresa.horasAnticipacionCancelacion,
             textoBannerPrecio: empresa.textoBannerPrecio,
+            colorPrimario: empresa.colorPrimario,
+            colorSecundario: empresa.colorSecundario,
+            colorAcento: empresa.colorAcento,
+            colorFondo: empresa.colorFondo,
+            personalizacion: empresa.personalizacion,
         });
     }
     catch (error) {
@@ -55,7 +65,7 @@ exports.configuracionRouter.patch('/', async (req, res) => {
         const empresaId = req.empresa?.id;
         if (!empresaId)
             return res.status(404).json({ error: 'Salón no especificado' });
-        const { nombreNegocio, direccion, telefonoWhatsapp, emailContacto, horarioApertura, horarioCierre, diasAtencion, duracionBloqueMinutos, horasAnticipacionCancelacion, textoBannerPrecio, } = req.body;
+        const { nombreNegocio, direccion, telefonoWhatsapp, emailContacto, horarioApertura, horarioCierre, diasAtencion, duracionBloqueMinutos, horasAnticipacionCancelacion, textoBannerPrecio, colorPrimario, colorSecundario, colorAcento, colorFondo, personalizacion, } = req.body;
         const dataToUpdate = {};
         if (nombreNegocio !== undefined)
             dataToUpdate.nombre = nombreNegocio;
@@ -77,6 +87,16 @@ exports.configuracionRouter.patch('/', async (req, res) => {
             dataToUpdate.horasAnticipacionCancelacion = Number(horasAnticipacionCancelacion);
         if (textoBannerPrecio !== undefined)
             dataToUpdate.textoBannerPrecio = textoBannerPrecio;
+        if (colorPrimario !== undefined)
+            dataToUpdate.colorPrimario = colorPrimario;
+        if (colorSecundario !== undefined)
+            dataToUpdate.colorSecundario = colorSecundario;
+        if (colorAcento !== undefined)
+            dataToUpdate.colorAcento = colorAcento;
+        if (colorFondo !== undefined)
+            dataToUpdate.colorFondo = colorFondo;
+        if (personalizacion !== undefined)
+            dataToUpdate.personalizacion = personalizacion;
         const actualizado = await database_1.prisma.empresa.update({
             where: { id: empresaId },
             data: dataToUpdate,
@@ -95,6 +115,11 @@ exports.configuracionRouter.patch('/', async (req, res) => {
             duracionBloqueMinutos: actualizado.duracionBloqueMinutos,
             horasAnticipacionCancelacion: actualizado.horasAnticipacionCancelacion,
             textoBannerPrecio: actualizado.textoBannerPrecio,
+            colorPrimario: actualizado.colorPrimario,
+            colorSecundario: actualizado.colorSecundario,
+            colorAcento: actualizado.colorAcento,
+            colorFondo: actualizado.colorFondo,
+            personalizacion: actualizado.personalizacion,
         });
     }
     catch (error) {

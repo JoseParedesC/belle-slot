@@ -10,6 +10,7 @@ const TOKEN_KEY = 'belle_slot_token';
 const USER_KEY = 'belle_slot_user';
 
 export function obtenerTenantSlug(): string {
+  if (typeof window === 'undefined') return 'belle-slot';
   const pathname = window.location.pathname;
   const parts = pathname.split('/').filter(Boolean);
   const knownPrefixes = ['estilistas', 'mis-citas', 'admin', 'explorar', 'salones', 'registro-salon'];
@@ -18,6 +19,12 @@ export function obtenerTenantSlug(): string {
     const slugFromUrl = parts[0].toLowerCase();
     localStorage.setItem(TENANT_KEY, slugFromUrl);
     return slugFromUrl;
+  }
+
+  // Si está en la raíz '/', el slug corresponde a belle-slot
+  if (parts.length === 0) {
+    localStorage.setItem(TENANT_KEY, 'belle-slot');
+    return 'belle-slot';
   }
 
   return localStorage.getItem(TENANT_KEY) || 'belle-slot';

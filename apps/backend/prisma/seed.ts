@@ -20,6 +20,10 @@ async function main() {
       horasAnticipacionCancelacion: 12,
       textoBannerPrecio:
         'El valor mostrado es el precio base del servicio. El costo final puede incrementar según el diseño que elijas.',
+      colorPrimario: '#d94676',
+      colorSecundario: '#8c1e40',
+      colorAcento: '#c29057',
+      colorFondo: '#faf6f8',
     },
     create: {
       id: 'empresa-belle-slot',
@@ -35,6 +39,10 @@ async function main() {
       horasAnticipacionCancelacion: 12,
       textoBannerPrecio:
         'El valor mostrado es el precio base del servicio. El costo final puede incrementar según el diseño que elijas.',
+      colorPrimario: '#d94676',
+      colorSecundario: '#8c1e40',
+      colorAcento: '#c29057',
+      colorFondo: '#faf6f8',
       plan: 'pro',
       activo: true,
     },
@@ -55,6 +63,10 @@ async function main() {
       horasAnticipacionCancelacion: 24,
       textoBannerPrecio:
         'Todos nuestros servicios en Glamour Spa incluyen exfoliación aromática de cortesía.',
+      colorPrimario: '#7c3aed',
+      colorSecundario: '#5b21b6',
+      colorAcento: '#06b6d4',
+      colorFondo: '#f8f7fc',
     },
     create: {
       id: 'empresa-glamour-nails',
@@ -70,6 +82,10 @@ async function main() {
       horasAnticipacionCancelacion: 24,
       textoBannerPrecio:
         'Todos nuestros servicios en Glamour Spa incluyen exfoliación aromática de cortesía.',
+      colorPrimario: '#7c3aed',
+      colorSecundario: '#5b21b6',
+      colorAcento: '#06b6d4',
+      colorFondo: '#f8f7fc',
       plan: 'pro',
       activo: true,
     },

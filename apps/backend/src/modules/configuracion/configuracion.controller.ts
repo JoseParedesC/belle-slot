@@ -25,6 +25,11 @@ configuracionRouter.get('/', async (req, res) => {
         duracionBloqueMinutos: fallback.duracionBloqueMinutos,
         horasAnticipacionCancelacion: fallback.horasAnticipacionCancelacion,
         textoBannerPrecio: fallback.textoBannerPrecio,
+        colorPrimario: fallback.colorPrimario,
+        colorSecundario: fallback.colorSecundario,
+        colorAcento: fallback.colorAcento,
+        colorFondo: fallback.colorFondo,
+        personalizacion: fallback.personalizacion,
       });
     }
 
@@ -42,6 +47,11 @@ configuracionRouter.get('/', async (req, res) => {
       duracionBloqueMinutos: empresa.duracionBloqueMinutos,
       horasAnticipacionCancelacion: empresa.horasAnticipacionCancelacion,
       textoBannerPrecio: empresa.textoBannerPrecio,
+      colorPrimario: empresa.colorPrimario,
+      colorSecundario: empresa.colorSecundario,
+      colorAcento: empresa.colorAcento,
+      colorFondo: empresa.colorFondo,
+      personalizacion: empresa.personalizacion,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -65,6 +75,11 @@ configuracionRouter.patch('/', async (req, res) => {
       duracionBloqueMinutos,
       horasAnticipacionCancelacion,
       textoBannerPrecio,
+      colorPrimario,
+      colorSecundario,
+      colorAcento,
+      colorFondo,
+      personalizacion,
     } = req.body;
 
     const dataToUpdate: any = {};
@@ -79,6 +94,11 @@ configuracionRouter.patch('/', async (req, res) => {
     if (horasAnticipacionCancelacion !== undefined)
       dataToUpdate.horasAnticipacionCancelacion = Number(horasAnticipacionCancelacion);
     if (textoBannerPrecio !== undefined) dataToUpdate.textoBannerPrecio = textoBannerPrecio;
+    if (colorPrimario !== undefined) dataToUpdate.colorPrimario = colorPrimario;
+    if (colorSecundario !== undefined) dataToUpdate.colorSecundario = colorSecundario;
+    if (colorAcento !== undefined) dataToUpdate.colorAcento = colorAcento;
+    if (colorFondo !== undefined) dataToUpdate.colorFondo = colorFondo;
+    if (personalizacion !== undefined) dataToUpdate.personalizacion = personalizacion;
 
     const actualizado = await prisma.empresa.update({
       where: { id: empresaId },
@@ -99,6 +119,11 @@ configuracionRouter.patch('/', async (req, res) => {
       duracionBloqueMinutos: actualizado.duracionBloqueMinutos,
       horasAnticipacionCancelacion: actualizado.horasAnticipacionCancelacion,
       textoBannerPrecio: actualizado.textoBannerPrecio,
+      colorPrimario: actualizado.colorPrimario,
+      colorSecundario: actualizado.colorSecundario,
+      colorAcento: actualizado.colorAcento,
+      colorFondo: actualizado.colorFondo,
+      personalizacion: actualizado.personalizacion,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

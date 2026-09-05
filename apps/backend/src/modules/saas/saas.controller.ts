@@ -20,6 +20,11 @@ saasRouter.get('/empresas', async (_req, res) => {
         horarioCierre: true,
         diasAtencion: true,
         textoBannerPrecio: true,
+        colorPrimario: true,
+        colorSecundario: true,
+        colorAcento: true,
+        colorFondo: true,
+        personalizacion: true,
         plan: true,
         _count: {
           select: {
@@ -83,6 +88,11 @@ saasRouter.post('/empresas', async (req, res) => {
       duracionBloqueMinutos = 30,
       horasAnticipacionCancelacion = 12,
       textoBannerPrecio,
+      colorPrimario = '#d94676',
+      colorSecundario = '#8c1e40',
+      colorAcento = '#c29057',
+      colorFondo = '#faf6f8',
+      personalizacion,
       adminNombre,
       adminEmail,
     } = req.body;
@@ -128,6 +138,11 @@ saasRouter.post('/empresas', async (req, res) => {
           textoBannerPrecio:
             textoBannerPrecio ||
             'Precios base del salón. El costo final puede variar según personalizaciones o diseños.',
+          colorPrimario,
+          colorSecundario,
+          colorAcento,
+          colorFondo,
+          personalizacion: personalizacion || undefined,
           plan: 'pro',
           activo: true,
         },
