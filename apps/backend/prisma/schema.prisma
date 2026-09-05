@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Empresa {
+  id                           String     @id @default(uuid())
+  nombre                       String     @map("nombre")
+  slug                         String     @unique @map("slug")
+  logoUrl                      String?    @map("logo_url")
+  direccion                    String?    @map("direccion")
+  telefonoWhatsapp             String?    @map("telefono_whatsapp")
+  emailContacto                String?    @map("email_contacto")
+  horarioApertura              String     @default("09:00") @map("horario_apertura")
+  horarioCierre                String     @default("18:00") @map("horario_cierre")
+  diasAtencion                 Json       @map("dias_atencion")
+  duracionBloqueMinutos        Int        @default(30) @map("duracion_bloque_minutos")
+  horasAnticipacionCancelacion Int        @default(12) @map("horas_anticipacion_cancelacion")
+  textoBannerPrecio            String?    @map("texto_banner_precio")
+  activo                       Boolean    @default(true)
+  plan                         String     @default("pro")
+  fechaCreacion                DateTime   @default(now()) @map("fecha_creacion")
+
+  servicios                    Servicio[]
+  empleadas                    Empleada[]
+  clientes                     Cliente[]
+  reservas                     Reserva[]
+  usuarios                     Usuario[]
+
+  @@map("empresa")
+}
+
+enum RolUsuarioSaaS {
+  superadmin
+  admin_empresa
+  estilista
+  cliente
+}
+
+model Usuario {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  nombre        String
+  rol           RolUsuarioSaaS @default(cliente)
+  empresaId     String?        @map("empresa_id")
+  empresa       Empresa?       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  passwordHash  String?        @map("password_hash")
+  foto          String?
+  activo        Boolean        @default(true)
+  fechaRegistro DateTime       @default(now()) @map("fecha_registro")
+
+  @@map("usuario")
+}
+
+model Cliente {
+  id                     String    @id @default(uuid())
+  empresaId              String?   @map("empresa_id")
+  empresa                Empresa?  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nombre                 String
+  telefono               String
+  email                  String?
+  cantidadInasistencias  Int       @default(0) @map("cantidad_inasistencias")
+  notasInternas          String?   @map("notas_internas")
+  fechaRegistro          DateTime  @default(now()) @map("fecha_registro")
+  reservas               Reserva[]
+
+  @@map("cliente")
+}
+
+model Servicio {
+  id               String    @id @default(uuid())
+  empresaId        String?   @map("empresa_id")
+  empresa          Empresa?  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nombre           String
+  descripcion      String?
+  duracionMinutos  Int       @map("duracion_minutos")
+  precioBase       Decimal   @map("precio_base")
+  activo           Boolean   @default(true)
+  disenos          Diseno[]
+  reservas         Reserva[]
+
+  @@map("servicio")
+}
+
+model Diseno {
+  id                   String     @id @default(uuid())
+  nombre               String
+  incrementoPrecio     Decimal    @default(0) @map("incremento_precio")
+  servicioId           String?    @map("servicio_id")
+  servicio             Servicio?  @relation(fields: [servicioId], references: [id])
+  imagenReferenciaUrl  String?    @map("imagen_referencia_url")
+  reservas             Reserva[]
+
+  @@map("diseno")
+}
+
+model Empleada {
+  id       String    @id @default(uuid())
+  empresaId String?  @map("empresa_id")
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nombre   String
+  email    String    @unique
+  telefono String?
+  activo   Boolean   @default(true)
+  reservas Reserva[]
+
+  @@map("empleada")
+}
+
+enum EstadoReserva {
+  pendiente
+  confirmada
+  completada
+  cancelada
+  no_asistio
+}
+
+model Reserva {
+  id                        String         @id @default(uuid())
+  empresaId                 String?        @map("empresa_id")
+  empresa                   Empresa?       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  clienteId                 String         @map("cliente_id")
+  cliente                   Cliente        @relation(fields: [clienteId], references: [id])
+  servicioId                String         @map("servicio_id")
+  servicio                  Servicio       @relation(fields: [servicioId], references: [id])
+  disenoId                  String?        @map("diseno_id")
+  diseno                    Diseno?        @relation(fields: [disenoId], references: [id])
+  empleadaId                String?        @map("empleada_id")
+  empleada                  Empleada?      @relation(fields: [empleadaId], references: [id])
+  fecha                     DateTime       @db.Date
+  horaInicio                String         @map("hora_inicio")
+  horaFin                   String         @map("hora_fin")
+  precioEstimado            Decimal        @map("precio_estimado")
+  estado                    EstadoReserva  @default(pendiente)
+  recordatorio24hEnviado    Boolean        @default(false) @map("recordatorio_24h_enviado")
+  recordatorio2hEnviado     Boolean        @default(false) @map("recordatorio_2h_enviado")
+  confirmadaPorCliente      Boolean        @default(false) @map("confirmada_por_cliente")
+  fechaCreacion             DateTime       @default(now()) @map("fecha_creacion")
+  fechaCancelacion          DateTime?      @map("fecha_cancelacion")
+  motivoCancelacion         String?        @map("motivo_cancelacion")
+  notificaciones            Notificacion[]
+  pagoDeposito              PagoDeposito?
+
+  @@index([empresaId, fecha])
+  @@map("reserva")
+}
+
+enum CanalNotificacion {
+  email
+  whatsapp
+}
+
+enum TipoNotificacion {
+  confirmacion_reserva
+  recordatorio_24h
+  recordatorio_2h
+  cancelacion
+}
+
+enum EstadoEnvio {
+  pendiente
+  enviado
+  fallido
+}
+
+model Notificacion {
+  id                 String             @id @default(uuid())
+  reservaId          String             @map("reserva_id")
+  reserva            Reserva            @relation(fields: [reservaId], references: [id])
+  canal              CanalNotificacion
+  tipo               TipoNotificacion
+  estadoEnvio        EstadoEnvio        @default(pendiente) @map("estado_envio")
+  fechaEnvio         DateTime?          @map("fecha_envio")
+  respuestaCliente   String?            @map("respuesta_cliente")
+
+  @@map("notificacion")
+}
+
+model ConfiguracionNegocio {
+  id                             String   @id @default(uuid())
+  nombreNegocio                  String   @default("Belle Slot Studio") @map("nombre_negocio")
+  direccion                      String?  @map("direccion")
+  telefonoWhatsapp               String?  @map("telefono_whatsapp")
+  horarioApertura                String   @map("horario_apertura")
+  horarioCierre                  String   @map("horario_cierre")
+  diasAtencion                   Json     @map("dias_atencion")
+  duracionBloqueMinutos          Int      @default(30) @map("duracion_bloque_minutos")
+  horasAnticipacionCancelacion   Int      @default(12) @map("horas_anticipacion_cancelacion")
+  textoBannerPrecio              String?  @map("texto_banner_precio")
+
+  @@map("configuracion_negocio")
+}
+
+enum EstadoPago {
+  pendiente
+  pagado
+  reembolsado
+  perdido_por_inasistencia
+}
+
+model PagoDeposito {
+  id                     String      @id @default(uuid())
+  reservaId              String      @unique @map("reserva_id")
+  reserva                Reserva     @relation(fields: [reservaId], references: [id])
+  montoDeposito          Decimal     @map("monto_deposito")
+  estado                 EstadoPago  @default(pendiente)
+  proveedorPago          String?     @map("proveedor_pago")
+  referenciaTransaccion  String?     @map("referencia_transaccion")
+
+  @@map("pago_deposito")
+}
