@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Scissors,
@@ -27,6 +27,7 @@ import {
   obtenerEstilistas
 } from '../../services/api';
 import { GoogleLoginModal } from '../../components/auth/GoogleLoginModal';
+import { useEmpresa } from '../../context/EmpresaContext';
 
 function padZero(num: number): string {
   return num.toString().padStart(2, '0');
@@ -38,6 +39,7 @@ function hoyISO(): string {
 }
 
 export function PortalEstilistas() {
+  const { empresaActual } = useEmpresa();
   const [usuario, setUsuario] = useState<Usuario | null>(obtenerUsuarioActual());
   const [fecha, setFecha] = useState(hoyISO());
   const [reservas, setReservas] = useState<ReservaItem[]>([]);
@@ -52,14 +54,14 @@ export function PortalEstilistas() {
     if (esEstilistaAutorizada) {
       obtenerEstilistas().then(setEstilistas).catch(console.error);
     }
-  }, [esEstilistaAutorizada]);
+  }, [esEstilistaAutorizada, empresaActual?.id]);
 
   useEffect(() => {
     if (esEstilistaAutorizada) {
       cargarReservas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fecha, estilistaFiltro, esEstilistaAutorizada]);
+  }, [fecha, estilistaFiltro, esEstilistaAutorizada, empresaActual?.id]);
 
   async function cargarReservas() {
     setCargando(true);
@@ -109,7 +111,7 @@ export function PortalEstilistas() {
           <h2 className="guard-title">Control de Seguridad de Agenda</h2>
           <p className="guard-desc">
             Para proteger la privacidad de las clientas y la confidencialidad del salón, este portal requiere
-            iniciar sesión con una cuenta de Google <strong>previamente autorizada</strong> por la administración de Belle Slot.
+            iniciar sesión con una cuenta de Google <strong>previamente autorizada</strong> por la administración de {empresaActual?.nombre || 'este salón'}.
           </p>
 
           <div className="guard-action-buttons">
@@ -313,7 +315,7 @@ export function PortalEstilistas() {
               const telLimpio = reserva.cliente.telefono?.replace(/\D/g, '');
               const whatsappUrl = telLimpio
                 ? `https://wa.me/${telLimpio}?text=${encodeURIComponent(
-                    `Hola ${reserva.cliente.nombre}, te saludamos de Belle Slot Nail Bar sobre tu cita programada a las ${reserva.horaInicio} hrs.`
+                    `Hola ${reserva.cliente.nombre}, te saludamos de ${empresaActual?.nombre || 'Belle Slot Nail Bar'} sobre tu cita programada a las ${reserva.horaInicio} hrs.`
                   )}`
                 : null;
 
@@ -417,4 +419,3 @@ export function PortalEstilistas() {
     </div>
   );
 }
-

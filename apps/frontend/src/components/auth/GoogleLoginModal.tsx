@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, Scissors, UserCheck, ShieldCheck, ArrowRight } from 'lucide-react';
 import { RolUsuario, Usuario } from '../../types';
 import { loginConGoogle } from '../../services/api';
+import { useEmpresa } from '../../context/EmpresaContext';
 
 interface Props {
   rolInicial?: 'cliente' | 'estilista';
@@ -10,30 +11,36 @@ interface Props {
 }
 
 export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExitoso }: Props) {
+  const { empresaActual } = useEmpresa();
   const [rol, setRol] = useState<'cliente' | 'estilista'>(rolInicial);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
-  const [nombreDemo, setNombreDemo] = useState(rol === 'estilista' ? 'Valentina Gómez' : 'Camila Morales');
-  const [emailDemo, setEmailDemo] = useState(rol === 'estilista' ? 'valentina.estilista@gmail.com' : 'camila.cliente@gmail.com');
+
+  const esGlamour = empresaActual?.slug === 'glamour-nails';
+  const estilistaInicialNombre = esGlamour ? 'Camila Rodríguez' : 'Valentina Gómez';
+  const estilistaInicialEmail = esGlamour ? 'camila.nails@gmail.com' : 'valentina.estilista@gmail.com';
+
+  const [nombreDemo, setNombreDemo] = useState(rol === 'estilista' ? estilistaInicialNombre : 'Camila Morales');
+  const [emailDemo, setEmailDemo] = useState(rol === 'estilista' ? estilistaInicialEmail : 'camila.cliente@gmail.com');
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (rol === 'estilista') {
-      setNombreDemo('Valentina Gómez');
-      setEmailDemo('valentina.estilista@gmail.com');
+      setNombreDemo(estilistaInicialNombre);
+      setEmailDemo(estilistaInicialEmail);
     } else {
       setNombreDemo('Camila Morales');
       setEmailDemo('camila.cliente@gmail.com');
     }
-  }, [rol]);
+  }, [rol, estilistaInicialNombre, estilistaInicialEmail]);
 
   useEffect(() => {
-    // Si Google Identity Services está cargado y hay un client ID configurado
-    if (googleClientId && (window as any).google?.accounts?.id && googleBtnRef.current) {
+    const win = window as any;
+    if (googleClientId && win.google && win.google.accounts && win.google.accounts.id && googleBtnRef.current) {
       try {
-        (window as any).google.accounts.id.initialize({
+        win.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: async (response: any) => {
             if (response.credential) {
@@ -41,36 +48,38 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
             }
           },
         });
-        (window as any).google.accounts.id.renderButton(googleBtnRef.current, {
+        win.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'outline',
           size: 'large',
+          width: 320,
           text: 'signin_with',
           shape: 'pill',
-          locale: 'es',
         });
-      } catch (err) {
-        console.warn('Error inicializando Google GIS:', err);
+      } catch (e) {
+        console.warn('Google Identity no se pudo iniciar:', e);
       }
     }
   }, [googleClientId, rol]);
 
-  async function procesarLogin(payload: { credential?: string; rol: 'cliente' | 'estilista'; email?: string; nombre?: string }) {
-    setCargando(true);
-    setError('');
+  const procesarLogin = async (payload: { credential?: string; rol: 'cliente' | 'estilista'; email?: string; nombre?: string }) => {
     try {
-      const data = await loginConGoogle(payload);
-      onLoginExitoso(data.usuario);
+      setCargando(true);
+      setError('');
+      const resp = await loginConGoogle(payload);
+      if (resp.usuario) {
+        onLoginExitoso(resp.usuario);
+      }
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Error al iniciar sesión con Google');
+      setError(err.response?.data?.error || 'Error al autenticar con Google. Intenta nuevamente.');
     } finally {
       setCargando(false);
     }
-  }
+  };
 
-  const handleDemoLogin = (e: React.FormEvent) => {
+  const handleDemoLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    procesarLogin({
-      rol: rol as 'cliente' | 'estilista',
+    await procesarLogin({
+      rol,
       nombre: nombreDemo,
       email: emailDemo,
     });
@@ -85,7 +94,7 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
 
         <div className="modal-header">
           <div className="modal-badge">
-            <Sparkles size={16} /> Belle Slot Studio
+            <Sparkles size={16} /> {empresaActual?.nombre || 'Belle Slot Studio'}
           </div>
           <h2 className="modal-title">Iniciar Sesión con Google</h2>
           <p className="modal-subtitle">
@@ -123,7 +132,7 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
           <div className="security-notice-box">
             <ShieldCheck size={18} className="security-icon" />
             <div>
-              <strong>Acceso Restringido:</strong> Solo estilistas con correo previamente autorizado por la administración pueden ingresar.
+              <strong>Acceso Restringido:</strong> Solo estilistas con correo previamente autorizado por la administración de {empresaActual?.nombre || 'este salón'} pueden ingresar.
             </div>
           </div>
         )}
@@ -154,26 +163,53 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
             <div className="demo-stylist-quick-picks">
               <span className="quick-picks-label">Cuentas para pruebas:</span>
               <div className="quick-picks-buttons">
-                <button
-                  type="button"
-                  className={`chip-stylist-test ${emailDemo === 'valentina.estilista@gmail.com' ? 'selected' : ''}`}
-                  onClick={() => {
-                    setNombreDemo('Valentina Gómez');
-                    setEmailDemo('valentina.estilista@gmail.com');
-                  }}
-                >
-                  ✓ Valentina (Autorizada)
-                </button>
-                <button
-                  type="button"
-                  className={`chip-stylist-test ${emailDemo === 'sofia.estilista@gmail.com' ? 'selected' : ''}`}
-                  onClick={() => {
-                    setNombreDemo('Sofía Mendoza');
-                    setEmailDemo('sofia.estilista@gmail.com');
-                  }}
-                >
-                  ✓ Sofía (Autorizada)
-                </button>
+                {esGlamour ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`chip-stylist-test ${emailDemo === 'camila.nails@gmail.com' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setNombreDemo('Camila Rodríguez');
+                        setEmailDemo('camila.nails@gmail.com');
+                      }}
+                    >
+                      ✓ Camila (Autorizada)
+                    </button>
+                    <button
+                      type="button"
+                      className={`chip-stylist-test ${emailDemo === 'sofia.nails@gmail.com' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setNombreDemo('Sofía Morales');
+                        setEmailDemo('sofia.nails@gmail.com');
+                      }}
+                    >
+                      ✓ Sofía (Autorizada)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={`chip-stylist-test ${emailDemo === 'valentina.estilista@gmail.com' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setNombreDemo('Valentina Gómez');
+                        setEmailDemo('valentina.estilista@gmail.com');
+                      }}
+                    >
+                      ✓ Valentina (Autorizada)
+                    </button>
+                    <button
+                      type="button"
+                      className={`chip-stylist-test ${emailDemo === 'sofia.estilista@gmail.com' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setNombreDemo('Sofía Mendoza');
+                        setEmailDemo('sofia.estilista@gmail.com');
+                      }}
+                    >
+                      ✓ Sofía (Autorizada)
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   className={`chip-stylist-test unauthorized ${emailDemo === 'no.autorizado@gmail.com' ? 'selected' : ''}`}
@@ -181,7 +217,7 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
                     setNombreDemo('Persona No Autorizada');
                     setEmailDemo('no.autorizado@gmail.com');
                   }}
-                  title="Prueba de intento no autorizado (debe ser bloqueado)"
+                  title="Prueba de intento no autorizado"
                 >
                   ⚠️ Probar no autorizada
                 </button>

@@ -1,3 +1,26 @@
+export interface Empresa {
+  id: string;
+  nombre: string;
+  slug: string;
+  logoUrl?: string | null;
+  direccion?: string | null;
+  telefonoWhatsapp?: string | null;
+  emailContacto?: string | null;
+  horarioApertura: string;
+  horarioCierre: string;
+  diasAtencion: string[];
+  duracionBloqueMinutos?: number;
+  horasAnticipacionCancelacion?: number;
+  textoBannerPrecio?: string | null;
+  plan?: string;
+  activo?: boolean;
+  _count?: {
+    servicios?: number;
+    empleadas?: number;
+    reservas?: number;
+  };
+}
+
 export interface Servicio {
   id: string;
   nombre: string;
@@ -16,11 +39,16 @@ export interface Diseno {
 export interface Configuracion {
   id?: string;
   nombreNegocio?: string;
+  slug?: string;
+  logoUrl?: string;
   direccion?: string;
   telefonoWhatsapp?: string;
+  emailContacto?: string;
   horarioApertura: string;
   horarioCierre: string;
   diasAtencion?: string[];
+  duracionBloqueMinutos?: number;
+  horasAnticipacionCancelacion?: number;
   textoBannerPrecio?: string;
 }
 
@@ -38,6 +66,7 @@ export interface Usuario {
   email?: string;
   telefono?: string;
   rol: RolUsuario;
+  empresaId?: string;
   foto?: string;
 }
 

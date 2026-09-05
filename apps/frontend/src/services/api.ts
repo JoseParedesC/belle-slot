@@ -1,9 +1,79 @@
 import axios from 'axios';
-import { Usuario, Empleada, ReservaItem } from '../types';
+import { Usuario, Empleada, ReservaItem, Empresa } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const api = axios.create({ baseURL: API_URL });
+
+const TENANT_KEY = 'belle_slot_tenant_slug';
+const TOKEN_KEY = 'belle_slot_token';
+const USER_KEY = 'belle_slot_user';
+
+export function obtenerTenantSlug(): string {
+  const pathname = window.location.pathname;
+  const parts = pathname.split('/').filter(Boolean);
+  const knownPrefixes = ['estilistas', 'mis-citas', 'admin', 'explorar', 'salones', 'registro-salon'];
+
+  if (parts.length > 0 && !knownPrefixes.includes(parts[0])) {
+    const slugFromUrl = parts[0].toLowerCase();
+    localStorage.setItem(TENANT_KEY, slugFromUrl);
+    return slugFromUrl;
+  }
+
+  return localStorage.getItem(TENANT_KEY) || 'belle-slot';
+}
+
+export function guardarTenantSlug(slug: string) {
+  localStorage.setItem(TENANT_KEY, slug.toLowerCase());
+}
+
+// Interceptor automático para enviar siempre el tenant y el token
+api.interceptors.request.use((config) => {
+  const currentSlug = obtenerTenantSlug();
+  if (currentSlug) {
+    config.headers['x-tenant-slug'] = currentSlug;
+  }
+
+  const token = obtenerToken();
+  if (token && !config.headers['Authorization']) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+// ---- SaaS Multi-Tenant Endpoints ----
+
+export async function obtenerEmpresasSaaS(): Promise<Empresa[]> {
+  const { data } = await api.get('/saas/empresas');
+  return data;
+}
+
+export async function obtenerEmpresaPorSlug(slug: string): Promise<Empresa> {
+  const { data } = await api.get(`/saas/empresas/${slug}`);
+  return data;
+}
+
+export async function registrarNuevaEmpresa(payload: {
+  nombre: string;
+  slug?: string;
+  direccion?: string;
+  telefonoWhatsapp?: string;
+  emailContacto?: string;
+  horarioApertura?: string;
+  horarioCierre?: string;
+  diasAtencion?: string[];
+  duracionBloqueMinutos?: number;
+  horasAnticipacionCancelacion?: number;
+  textoBannerPrecio?: string;
+  adminNombre?: string;
+  adminEmail?: string;
+}) {
+  const { data } = await api.post('/saas/empresas', payload);
+  return data;
+}
+
+// ---- Servicios, Diseños y Configuración del Salón Activo ----
 
 export async function obtenerServicios() {
   const { data } = await api.get('/servicios');
@@ -46,9 +116,6 @@ export async function obtenerMisReservas(email?: string, telefono?: string): Pro
 }
 
 // ---- Autenticación y Usuario ----
-
-const TOKEN_KEY = 'belle_slot_token';
-const USER_KEY = 'belle_slot_user';
 
 export function guardarToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -175,5 +242,3 @@ export async function obtenerReporteOcupacion() {
   const { data } = await api.get('/admin/reportes/ocupacion', { headers: authHeaders() });
   return data;
 }
-
-
