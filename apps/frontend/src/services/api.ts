@@ -141,6 +141,21 @@ export async function cambiarEstadoReservaAdmin(id: string, estado: 'completada'
   return data;
 }
 
+export async function obtenerEstilistasAdmin(): Promise<Empleada[]> {
+  const { data } = await api.get('/admin/estilistas', { headers: authHeaders() });
+  return data;
+}
+
+export async function crearEstilistaAdmin(payload: { nombre: string; email: string; telefono?: string }) {
+  const { data } = await api.post('/admin/estilistas', payload, { headers: authHeaders() });
+  return data;
+}
+
+export async function cambiarEstadoEstilistaAdmin(id: string, activo: boolean) {
+  const { data } = await api.patch(`/admin/estilistas/${id}/estado`, { activo }, { headers: authHeaders() });
+  return data;
+}
+
 export async function obtenerReporteOcupacion() {
   const { data } = await api.get('/admin/reportes/ocupacion', { headers: authHeaders() });
   return data;

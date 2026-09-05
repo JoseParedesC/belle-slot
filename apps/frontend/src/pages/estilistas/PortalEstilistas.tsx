@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Scissors,
   Calendar,
@@ -12,7 +13,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  DollarSign
+  DollarSign,
+  ShieldAlert,
+  Lock,
+  ShieldCheck,
+  ArrowRight
 } from 'lucide-react';
 import { Usuario, ReservaItem, Empleada } from '../../types';
 import {
@@ -41,14 +46,20 @@ export function PortalEstilistas() {
   const [cargando, setCargando] = useState(false);
   const [modalAuth, setModalAuth] = useState(false);
 
-  useEffect(() => {
-    obtenerEstilistas().then(setEstilistas).catch(console.error);
-  }, []);
+  const esEstilistaAutorizada = usuario && (usuario.rol === 'estilista' || usuario.rol === 'admin');
 
   useEffect(() => {
-    cargarReservas();
+    if (esEstilistaAutorizada) {
+      obtenerEstilistas().then(setEstilistas).catch(console.error);
+    }
+  }, [esEstilistaAutorizada]);
+
+  useEffect(() => {
+    if (esEstilistaAutorizada) {
+      cargarReservas();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fecha, estilistaFiltro]);
+  }, [fecha, estilistaFiltro, esEstilistaAutorizada]);
 
   async function cargarReservas() {
     setCargando(true);
@@ -82,6 +93,65 @@ export function PortalEstilistas() {
   const totalCitas = reservas.length;
   const completadas = reservas.filter((r) => r.estado === 'completada').length;
   const ingresosEstimados = reservas.reduce((acc, r) => acc + Number(r.precioEstimado || 0), 0);
+
+  if (!esEstilistaAutorizada) {
+    return (
+      <div className="portal-estilistas-container">
+        <div className="portal-guard-lock-card">
+          <div className="guard-icon-wrap">
+            <ShieldAlert size={48} />
+          </div>
+
+          <div className="modal-badge warning">
+            <Lock size={15} /> Acceso Exclusivo para Estilistas
+          </div>
+
+          <h2 className="guard-title">Control de Seguridad de Agenda</h2>
+          <p className="guard-desc">
+            Para proteger la privacidad de las clientas y la confidencialidad del salón, este portal requiere
+            iniciar sesión con una cuenta de Google <strong>previamente autorizada</strong> por la administración de Belle Slot.
+          </p>
+
+          <div className="guard-action-buttons">
+            <button
+              type="button"
+              className="btn-primary-action"
+              onClick={() => setModalAuth(true)}
+            >
+              <svg className="google-icon-svg" viewBox="0 0 24 24" width="18" height="18">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>Acceder como Estilista</span>
+              <ArrowRight size={16} />
+            </button>
+
+            <Link to="/" className="btn-secondary">
+              Volver al Inicio
+            </Link>
+          </div>
+
+          <div className="guard-footnote">
+            <ShieldCheck size={16} />
+            <span>¿Eres parte del equipo? Solicita a tu administradora que active tu correo antes de ingresar.</span>
+          </div>
+        </div>
+
+        {modalAuth && (
+          <GoogleLoginModal
+            rolInicial="estilista"
+            onCerrar={() => setModalAuth(false)}
+            onLoginExitoso={(u) => {
+              setUsuario(u);
+              setModalAuth(false);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="portal-estilistas-container">

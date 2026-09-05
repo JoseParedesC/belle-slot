@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authRouter = void 0;
+exports.adminEstilistasRouter = exports.authRouter = void 0;
 const express_1 = require("express");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = require("../../config/database");
@@ -50,32 +50,44 @@ exports.authRouter.post('/google', async (req, res) => {
             email = `${nombre.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
         }
         if (rol === 'estilista') {
-            // Buscar o registrar estilista en tabla Empleada
-            let empleada = await database_1.prisma.empleada.findFirst({
-                where: { nombre: { equals: nombre, mode: 'insensitive' } },
-            });
-            if (!empleada) {
-                empleada = await database_1.prisma.empleada.create({
-                    data: {
-                        nombre,
-                        activo: true,
-                    },
+            const emailLimpio = (email || '').toLowerCase().trim();
+            if (!emailLimpio) {
+                return res.status(400).json({
+                    error: 'Se requiere un correo electrónico válido para verificar la cuenta de estilista',
                 });
             }
-            const token = jsonwebtoken_1.default.sign({ id: empleada.id, usuario: empleada.nombre, email, rol: 'estilista', foto }, JWT_SECRET, { expiresIn: '24h' });
+            // Buscar estilista autorizada en tabla Empleada por correo electrónico
+            const empleada = await database_1.prisma.empleada.findFirst({
+                where: {
+                    email: { equals: emailLimpio, mode: 'insensitive' },
+                },
+            });
+            // RECHAZAR acceso si no está pre-registrada por la administración
+            if (!empleada) {
+                return res.status(403).json({
+                    error: `Acceso restringido: El correo "${emailLimpio}" no está registrado como estilista autorizada en Belle Slot. Si formas parte del equipo, solicita a la administración que autorice tu cuenta.`,
+                });
+            }
+            if (!empleada.activo) {
+                return res.status(403).json({
+                    error: `La cuenta de estilista para "${empleada.nombre}" se encuentra inactiva. Comunícate con la administración.`,
+                });
+            }
+            const token = jsonwebtoken_1.default.sign({ id: empleada.id, usuario: empleada.nombre, email: empleada.email, rol: 'estilista', foto }, JWT_SECRET, { expiresIn: '24h' });
             return res.json({
                 token,
                 usuario: {
                     id: empleada.id,
                     nombre: empleada.nombre,
-                    email,
+                    email: empleada.email,
+                    telefono: empleada.telefono,
                     rol: 'estilista',
                     foto: foto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
                 },
             });
         }
         else {
-            // Rol cliente
+            // Rol cliente: los clientes sí pueden auto-registrarse al agendar citas
             let cliente = await database_1.prisma.cliente.findFirst({
                 where: { email },
             });
@@ -88,7 +100,7 @@ exports.authRouter.post('/google', async (req, res) => {
                     },
                 });
             }
-            const token = jsonwebtoken_1.default.sign({ id: cliente.id, usuario: cliente.nombre, email, rol: 'cliente', foto }, JWT_SECRET, { expiresIn: '24h' });
+            const token = jsonwebtoken_1.default.sign({ id: cliente.id, usuario: cliente.nombre, email: cliente.email, rol: 'cliente', foto }, JWT_SECRET, { expiresIn: '24h' });
             return res.json({
                 token,
                 usuario: {
@@ -107,14 +119,70 @@ exports.authRouter.post('/google', async (req, res) => {
         res.status(500).json({ error: error.message || 'Error al autenticar con Google' });
     }
 });
-// GET /api/auth/estilistas
+// GET /api/auth/estilistas (Lista pública de estilistas activas para selector de citas)
 exports.authRouter.get('/estilistas', async (_req, res) => {
     try {
         const estilistas = await database_1.prisma.empleada.findMany({
             where: { activo: true },
-            select: { id: true, nombre: true },
+            select: { id: true, nombre: true, email: true },
+            orderBy: { nombre: 'asc' },
         });
         res.json(estilistas);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// ---- Router para Administración de Estilistas (/api/admin/estilistas) ----
+exports.adminEstilistasRouter = (0, express_1.Router)();
+// GET /api/admin/estilistas (Lista completa con estados para panel admin)
+exports.adminEstilistasRouter.get('/', async (_req, res) => {
+    try {
+        const estilistas = await database_1.prisma.empleada.findMany({
+            orderBy: { nombre: 'asc' },
+        });
+        res.json(estilistas);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/admin/estilistas (Registrar nueva estilista autorizada)
+exports.adminEstilistasRouter.post('/', async (req, res) => {
+    try {
+        const { nombre, email, telefono } = req.body;
+        if (!nombre || !email) {
+            return res.status(400).json({ error: 'El nombre y correo electrónico son requeridos' });
+        }
+        const emailLimpio = email.toLowerCase().trim();
+        const existe = await database_1.prisma.empleada.findUnique({ where: { email: emailLimpio } });
+        if (existe) {
+            return res.status(409).json({ error: 'Ya existe una estilista registrada con este correo' });
+        }
+        const nueva = await database_1.prisma.empleada.create({
+            data: {
+                nombre: nombre.trim(),
+                email: emailLimpio,
+                telefono: telefono ? telefono.trim() : null,
+                activo: true,
+            },
+        });
+        res.status(201).json(nueva);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// PATCH /api/admin/estilistas/:id/estado (Activar o desactivar estilista)
+exports.adminEstilistasRouter.patch('/:id/estado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { activo } = req.body;
+        const actualizada = await database_1.prisma.empleada.update({
+            where: { id },
+            data: { activo: Boolean(activo) },
+        });
+        res.json(actualizada);
     }
     catch (error) {
         res.status(500).json({ error: error.message });

@@ -48,6 +48,8 @@ model Diseno {
 model Empleada {
   id       String    @id @default(uuid())
   nombre   String
+  email    String    @unique
+  telefono String?
   activo   Boolean   @default(true)
   reservas Reserva[]
 
@@ -122,6 +124,9 @@ model Notificacion {
 
 model ConfiguracionNegocio {
   id                             String   @id @default(uuid())
+  nombreNegocio                  String   @default("Belle Slot Studio") @map("nombre_negocio")
+  direccion                      String?  @map("direccion")
+  telefonoWhatsapp               String?  @map("telefono_whatsapp")
   horarioApertura                String   @map("horario_apertura")
   horarioCierre                  String   @map("horario_cierre")
   diasAtencion                   Json     @map("dias_atencion")

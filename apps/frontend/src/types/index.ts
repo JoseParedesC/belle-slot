@@ -14,9 +14,14 @@ export interface Diseno {
 }
 
 export interface Configuracion {
+  id?: string;
+  nombreNegocio?: string;
+  direccion?: string;
+  telefonoWhatsapp?: string;
   horarioApertura: string;
   horarioCierre: string;
-  textoBannerPrecio: string;
+  diasAtencion?: string[];
+  textoBannerPrecio?: string;
 }
 
 export interface DatosCliente {
@@ -39,6 +44,8 @@ export interface Usuario {
 export interface Empleada {
   id: string;
   nombre: string;
+  email?: string;
+  telefono?: string;
   activo?: boolean;
 }
 

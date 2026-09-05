@@ -9,11 +9,6 @@ import { AdminCalendario } from './pages/admin/Calendario';
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Reservar />} />
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin/calendario" element={<AdminCalendario />} />
-      </Routes>
       <div className="app-root-wrapper">
         <Navbar />
         <div className="app-main-content">

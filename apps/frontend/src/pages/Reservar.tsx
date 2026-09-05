@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Heart, Shield, Clock, MapPin, Phone, Calendar as CalendarIcon } from 'lucide-react';
-import { Servicio } from '../types';
-import { obtenerServicios } from '../services/api';
+import { Sparkles, Heart, Shield, Clock, MapPin, Phone, Calendar as CalendarIcon, MessageCircle } from 'lucide-react';
+import { Servicio, Configuracion } from '../types';
+import { obtenerServicios, obtenerConfiguracion } from '../services/api';
 import { CalendarioMensual } from '../components/calendario/CalendarioMensual';
 import { ModalReserva } from '../components/modal-reserva/ModalReserva';
 import { SelectorServicio } from '../components/selector-servicio/SelectorServicio';
 
 export function Reservar() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [config, setConfig] = useState<Configuracion | null>(null);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | undefined>();
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [cargandoServicios, setCargandoServicios] = useState(true);
 
   useEffect(() => {
+    obtenerConfiguracion().then(setConfig).catch(console.error);
+
     obtenerServicios()
       .then((data) => {
         setServicios(data || []);
@@ -39,7 +42,7 @@ export function Reservar() {
             <Sparkles size={16} /> Experiencia & Belleza de Uñas
           </div>
           <h1 className="hero-title">
-            Reserva tu Cita en <span className="highlight-text">Belle Slot</span>
+            Reserva tu Cita en <span className="highlight-text">{config?.nombreNegocio || 'Belle Slot'}</span>
           </h1>
           <p className="hero-description">
             Elige el día que prefieras en nuestro calendario mensual. Al hacer clic en una fecha,
@@ -96,13 +99,13 @@ export function Reservar() {
           />
         </section>
 
-        {/* Info Salon Footer */}
+        {/* Info Salon Footer (Leído desde la Base de Datos) */}
         <section className="salon-info-strip">
           <div className="info-strip-card">
             <MapPin size={22} className="strip-icon" />
             <div>
-              <strong>Ubicación del Studio</strong>
-              <p>Centro Comercial Plaza Belle, Local 204</p>
+              <strong>Ubicación de {config?.nombreNegocio || 'Belle Slot'}</strong>
+              <p>{config?.direccion || 'Centro Comercial Plaza Belle, Local 204'}</p>
             </div>
           </div>
 
@@ -110,7 +113,12 @@ export function Reservar() {
             <Clock size={22} className="strip-icon" />
             <div>
               <strong>Horario de Atención</strong>
-              <p>Lunes a Sábado · 09:00 AM a 06:00 PM</p>
+              <p>
+                {config?.diasAtencion && config.diasAtencion.length > 0
+                  ? `${config.diasAtencion[0]} a ${config.diasAtencion[config.diasAtencion.length - 1]}`
+                  : 'Lunes a Sábado'}{' '}
+                · {config?.horarioApertura || '09:00'} a {config?.horarioCierre || '18:00'} hrs
+              </p>
             </div>
           </div>
 
@@ -118,7 +126,21 @@ export function Reservar() {
             <Phone size={22} className="strip-icon" />
             <div>
               <strong>Consultas por WhatsApp</strong>
-              <p>+57 (300) 123-4567</p>
+              {config?.telefonoWhatsapp ? (
+                <a
+                  href={`https://wa.me/${config.telefonoWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Hola, me comunico desde el sitio web de ${config.nombreNegocio || 'Belle Slot'}`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="whatsapp-contact-link"
+                >
+                  <MessageCircle size={15} />
+                  <span>{config.telefonoWhatsapp}</span>
+                </a>
+              ) : (
+                <p>No configurado</p>
+              )}
             </div>
           </div>
         </section>

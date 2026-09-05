@@ -18,3 +18,4 @@ exports.apiRouter.use('/', reserva_controller_1.reservaRouter); // expone /dispo
 exports.adminRouter = (0, express_1.Router)();
 exports.adminRouter.use('/', reserva_controller_1.adminReservaRouter);
 exports.adminRouter.use('/clientes', cliente_controller_1.clienteRouter);
+exports.adminRouter.use('/estilistas', auth_controller_1.adminEstilistasRouter);

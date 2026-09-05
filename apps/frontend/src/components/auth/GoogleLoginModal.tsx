@@ -119,7 +119,21 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
           </button>
         </div>
 
-        {error && <div className="error-alert">{error}</div>}
+        {rol === 'estilista' && (
+          <div className="security-notice-box">
+            <ShieldCheck size={18} className="security-icon" />
+            <div>
+              <strong>Acceso Restringido:</strong> Solo estilistas con correo previamente autorizado por la administración pueden ingresar.
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="error-alert">
+            <X size={16} />
+            <span>{error}</span>
+          </div>
+        )}
 
         {googleClientId && (
           <div className="google-official-box">
@@ -135,6 +149,45 @@ export function GoogleLoginModal({ rolInicial = 'cliente', onCerrar, onLoginExit
               Ingresa con tu cuenta de Google como <strong>{rol === 'estilista' ? 'Estilista' : 'Clienta'}</strong>:
             </span>
           </div>
+
+          {rol === 'estilista' && (
+            <div className="demo-stylist-quick-picks">
+              <span className="quick-picks-label">Cuentas para pruebas:</span>
+              <div className="quick-picks-buttons">
+                <button
+                  type="button"
+                  className={`chip-stylist-test ${emailDemo === 'valentina.estilista@gmail.com' ? 'selected' : ''}`}
+                  onClick={() => {
+                    setNombreDemo('Valentina Gómez');
+                    setEmailDemo('valentina.estilista@gmail.com');
+                  }}
+                >
+                  ✓ Valentina (Autorizada)
+                </button>
+                <button
+                  type="button"
+                  className={`chip-stylist-test ${emailDemo === 'sofia.estilista@gmail.com' ? 'selected' : ''}`}
+                  onClick={() => {
+                    setNombreDemo('Sofía Mendoza');
+                    setEmailDemo('sofia.estilista@gmail.com');
+                  }}
+                >
+                  ✓ Sofía (Autorizada)
+                </button>
+                <button
+                  type="button"
+                  className={`chip-stylist-test unauthorized ${emailDemo === 'no.autorizado@gmail.com' ? 'selected' : ''}`}
+                  onClick={() => {
+                    setNombreDemo('Persona No Autorizada');
+                    setEmailDemo('no.autorizado@gmail.com');
+                  }}
+                  title="Prueba de intento no autorizado (debe ser bloqueado)"
+                >
+                  ⚠️ Probar no autorizada
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label>Nombre</label>

@@ -172,14 +172,14 @@ export function ModalReserva({
               <Sparkles size={16} /> ¡Cita Reservada con Éxito!
             </div>
 
-            <h2 className="modal-title">¡Te esperamos en Belle Slot!</h2>
+            <h2 className="modal-title">¡Te esperamos en {config?.nombreNegocio || 'Belle Slot'}!</h2>
             <p className="voucher-subtitle">
               Hemos registrado tu reserva. Te enviaremos un recordatorio por WhatsApp antes de tu cita.
             </p>
 
             <div className="voucher-card">
               <div className="voucher-header">
-                <span className="voucher-brand">Belle Slot Studio</span>
+                <span className="voucher-brand">{config?.nombreNegocio || 'Belle Slot Studio'}</span>
                 <span className="voucher-badge-estado">Confirmada</span>
               </div>
 

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sparkles, Calendar, User, LogOut, Scissors, Clock } from 'lucide-react';
-import { Usuario } from '../../types';
-import { obtenerUsuarioActual, cerrarSesion } from '../../services/api';
+import { Usuario, Configuracion } from '../../types';
+import { obtenerUsuarioActual, cerrarSesion, obtenerConfiguracion } from '../../services/api';
 import { GoogleLoginModal } from '../auth/GoogleLoginModal';
 
 export function Navbar() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [config, setConfig] = useState<Configuracion | null>(null);
   const [modalAuthAbierto, setModalAuthAbierto] = useState(false);
   const [rolAuthInicial, setRolAuthInicial] = useState<'cliente' | 'estilista'>('cliente');
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -15,6 +16,10 @@ export function Navbar() {
   useEffect(() => {
     setUsuario(obtenerUsuarioActual());
   }, [location.pathname]);
+
+  useEffect(() => {
+    obtenerConfiguracion().then(setConfig).catch(console.error);
+  }, []);
 
   const handleLogout = () => {
     cerrarSesion();
@@ -37,7 +42,7 @@ export function Navbar() {
               <Sparkles size={20} />
             </span>
             <div className="brand-text">
-              <span className="brand-title">Belle Slot</span>
+              <span className="brand-title">{config?.nombreNegocio || 'Belle Slot'}</span>
               <span className="brand-subtitle">Nail Bar & Studio</span>
             </div>
           </Link>
