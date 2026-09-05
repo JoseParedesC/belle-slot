@@ -2931,3 +2931,645 @@ button {
     max-height: 95vh;
   }
 }
+
+
+/* ==========================================================================
+   MULTI-TENANT SAAS & TENANT SWITCHER
+   ========================================================================== */
+
+.navbar-left-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Tenant Switcher Button & Dropdown */
+.tenant-switcher-container {
+  position: relative;
+}
+
+.tenant-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(238, 226, 230, 0.45);
+  border: 1px solid rgba(224, 186, 196, 0.6);
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.tenant-switcher-btn:hover,
+.tenant-switcher-btn.activo {
+  background: rgba(238, 226, 230, 0.85);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(181, 70, 98, 0.12);
+}
+
+.tenant-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tenant-info-compact {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.tenant-label-tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.tenant-name-active {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tenant-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.tenant-chevron.rotado {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.tenant-switcher-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 0.6rem;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.tenant-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tenant-count-badge {
+  background: rgba(181, 70, 98, 0.08);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+}
+
+.tenant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.tenant-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.tenant-item-btn:hover {
+  background: rgba(246, 240, 242, 0.7);
+}
+
+.tenant-item-btn.seleccionado {
+  background: rgba(181, 70, 98, 0.08);
+  border-color: rgba(181, 70, 98, 0.2);
+}
+
+.tenant-item-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary) 0%, #7a1d36 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.tenant-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.tenant-item-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tenant-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tenant-check-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.tenant-item-address {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.tenant-dropdown-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tenant-footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.tenant-footer-link:hover {
+  color: var(--primary);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.tenant-register-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tenant-register-btn:hover {
+  background: var(--primary-hover, #962846);
+}
+
+/* ==========================================================================
+   PÁGINA: MIS CITAS (CONSULTA Y GESTIÓN DE CITAS CLIENTAS)
+   ========================================================================== */
+
+.mis-citas-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.mis-citas-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.mis-citas-title {
+  font-family: var(--font-serif);
+  font-size: 2.35rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.mis-citas-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.google-banner-clientas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, rgba(246, 240, 242, 0.8) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 650px;
+  box-shadow: var(--shadow-xs);
+}
+
+.google-banner-clientas p {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Search Box */
+.mis-citas-search-card {
+  background: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: 18px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 650px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  transition: var(--transition);
+}
+
+.mis-citas-search-card:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(181, 70, 98, 0.12), var(--shadow-md);
+}
+
+.search-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.search-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: left;
+}
+
+.search-input-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.search-input-group input {
+  padding: 0.75rem 0.95rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  background: #fdfbfb;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.search-input-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+}
+
+.btn-search-citas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary) 0%, #7a1d36 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(181, 70, 98, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-search-citas:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(181, 70, 98, 0.35);
+}
+
+.btn-search-citas:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Results Area */
+.mis-citas-results-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.citas-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.cita-card {
+  background: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cita-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--border-color);
+}
+
+.cita-card.estado-confirmada::before {
+  background: #16a34a;
+}
+
+.cita-card.estado-pendiente::before {
+  background: #ea580c;
+}
+
+.cita-card.estado-completada::before {
+  background: var(--primary);
+}
+
+.cita-card.estado-cancelada::before {
+  background: #dc2626;
+}
+
+.cita-card.estado-no_asistio::before {
+  background: #64748b;
+}
+
+.cita-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cita-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.estado-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.badge-confirmada {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-pendiente {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.badge-completada {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.badge-cancelada {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-no_asistio {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cita-codigo {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--text-muted);
+  background: #f4eff1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cita-service-info h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.diseno-tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--primary);
+  background: rgba(181, 70, 98, 0.08);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.cita-datetime-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: #fdfbfb;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+}
+
+.dt-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.dt-row svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.cita-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.precio-tag {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Empty & Initial States */
+.empty-citas-state,
+.initial-citas-prompt,
+.loading-state-box {
+  background: white;
+  border: 1.5px dashed var(--border-color);
+  border-radius: 18px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 580px;
+  margin: 1.5rem auto 0;
+}
+
+.empty-icon {
+  color: #ea580c;
+}
+
+.prompt-icon {
+  color: var(--primary);
+}
+
+.empty-citas-state h3 {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  color: var(--text-main);
+}
+
+.empty-citas-state p,
+.initial-citas-prompt p,
+.loading-state-box p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.btn-agendar-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: white;
+  padding: 0.7rem 1.35rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(181, 70, 98, 0.25);
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.btn-agendar-cta:hover {
+  background: var(--primary-hover, #962846);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .search-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .citas-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .google-banner-clientas {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.spinning-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
