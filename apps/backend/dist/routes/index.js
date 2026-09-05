@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminRouter = exports.apiRouter = void 0;
+const express_1 = require("express");
+const servicio_controller_1 = require("../modules/servicios/servicio.controller");
+const diseno_controller_1 = require("../modules/disenos/diseno.controller");
+const cliente_controller_1 = require("../modules/clientes/cliente.controller");
+const reserva_controller_1 = require("../modules/reservas/reserva.controller");
+const configuracion_controller_1 = require("../modules/configuracion/configuracion.controller");
+const auth_controller_1 = require("../modules/auth/auth.controller");
+exports.apiRouter = (0, express_1.Router)();
+exports.apiRouter.use('/auth', auth_controller_1.authRouter);
+exports.apiRouter.use('/servicios', servicio_controller_1.servicioRouter);
+exports.apiRouter.use('/disenos', diseno_controller_1.disenoRouter);
+exports.apiRouter.use('/clientes', cliente_controller_1.clienteRouter);
+exports.apiRouter.use('/configuracion', configuracion_controller_1.configuracionRouter);
+exports.apiRouter.use('/', reserva_controller_1.reservaRouter); // expone /disponibilidad y /reservas
+exports.adminRouter = (0, express_1.Router)();
+exports.adminRouter.use('/', reserva_controller_1.adminReservaRouter);
+exports.adminRouter.use('/clientes', cliente_controller_1.clienteRouter);

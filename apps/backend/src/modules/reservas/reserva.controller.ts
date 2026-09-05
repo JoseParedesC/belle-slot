@@ -42,6 +42,35 @@ reservaRouter.post('/reservas', async (req, res) => {
   }
 });
 
+// GET /api/reservas/mis-reservas?email=...&telefono=...
+reservaRouter.get('/reservas/cliente/mis-reservas', async (req, res) => {
+  try {
+    const { email, telefono } = req.query as { email?: string; telefono?: string };
+    if (!email && !telefono) {
+      return res.status(400).json({ error: 'Debes proporcionar email o teléfono' });
+    }
+
+    const whereCliente: any = {};
+    if (email) whereCliente.email = email;
+    if (telefono) whereCliente.telefono = telefono;
+
+    const reservas = await prisma.reserva.findMany({
+      where: {
+        cliente: whereCliente,
+      },
+      include: {
+        servicio: true,
+        diseno: true,
+        empleada: true,
+      },
+      orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+    });
+    res.json(reservas);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/reservas/:id
 reservaRouter.get('/reservas/:id', async (req, res) => {
   const reserva = await obtenerReserva(req.params.id);
@@ -59,14 +88,23 @@ reservaRouter.patch('/reservas/:id/cancelar', async (req, res) => {
   }
 });
 
-// ---- Rutas de administración ----
+// ---- Rutas de administración y estilistas ----
 
-// GET /api/admin/reservas?fecha=YYYY-MM-DD
+// GET /api/admin/reservas?fecha=YYYY-MM-DD&empleada_id=...
 adminReservaRouter.get('/reservas', async (req, res) => {
-  const { fecha } = req.query as { fecha?: string };
+  const { fecha, empleada_id } = req.query as { fecha?: string; empleada_id?: string };
+  const where: any = {};
+
+  if (fecha) {
+    where.fecha = new Date(fecha);
+  }
+  if (empleada_id) {
+    where.empleadaId = empleada_id;
+  }
+
   const reservas = await prisma.reserva.findMany({
-    where: fecha ? { fecha: new Date(fecha) } : {},
-    include: { cliente: true, servicio: true, diseno: true },
+    where,
+    include: { cliente: true, servicio: true, diseno: true, empleada: true },
     orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
   });
   res.json(reservas);

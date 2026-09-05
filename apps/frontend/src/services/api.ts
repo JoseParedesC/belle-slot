@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Usuario, Empleada, ReservaItem } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -37,39 +38,101 @@ export async function crearReserva(payload: {
   return data;
 }
 
-// ---- Admin ----
+export async function obtenerMisReservas(email?: string, telefono?: string): Promise<ReservaItem[]> {
+  const { data } = await api.get('/reservas/cliente/mis-reservas', {
+    params: { email, telefono },
+  });
+  return data;
+}
+
+// ---- Autenticación y Usuario ----
+
+const TOKEN_KEY = 'belle_slot_token';
+const USER_KEY = 'belle_slot_user';
 
 export function guardarToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem('admin_token', token);
 }
 
-export function obtenerToken() {
-  return localStorage.getItem('admin_token');
+export function obtenerToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('admin_token');
+}
+
+export function guardarUsuarioActual(usuario: Usuario) {
+  localStorage.setItem(USER_KEY, JSON.stringify(usuario));
+}
+
+export function obtenerUsuarioActual(): Usuario | null {
+  const data = localStorage.getItem(USER_KEY);
+  if (!data) return null;
+  try {
+    return JSON.parse(data) as Usuario;
+  } catch {
+    return null;
+  }
 }
 
 export function cerrarSesion() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
   localStorage.removeItem('admin_token');
+}
+
+export function authHeaders() {
+  const token = obtenerToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export async function login(usuario: string, password: string) {
   const { data } = await api.post('/auth/login', { usuario, password });
-  guardarToken(data.token);
-  return data.token;
+  if (data.token) {
+    guardarToken(data.token);
+  }
+  if (data.usuario) {
+    guardarUsuarioActual(data.usuario);
+  }
+  return data;
 }
 
-function authHeaders() {
-  return { Authorization: `Bearer ${obtenerToken()}` };
+export async function loginConGoogle(payload: {
+  credential?: string;
+  rol: 'estilista' | 'cliente';
+  email?: string;
+  nombre?: string;
+  foto?: string;
+  telefono?: string;
+}) {
+  const { data } = await api.post('/auth/google', payload);
+  if (data.token) {
+    guardarToken(data.token);
+  }
+  if (data.usuario) {
+    guardarUsuarioActual(data.usuario);
+  }
+  return data;
 }
 
-export async function obtenerReservasAdmin(fecha: string) {
+export async function obtenerEstilistas(): Promise<Empleada[]> {
+  const { data } = await api.get('/auth/estilistas');
+  return data;
+}
+
+// ---- Administración y Estilistas ----
+
+export async function obtenerReservasAdmin(fecha?: string, empleadaId?: string): Promise<ReservaItem[]> {
+  const params: any = {};
+  if (fecha) params.fecha = fecha;
+  if (empleadaId) params.empleada_id = empleadaId;
+
   const { data } = await api.get('/admin/reservas', {
-    params: { fecha },
+    params,
     headers: authHeaders(),
   });
   return data;
 }
 
-export async function cambiarEstadoReservaAdmin(id: string, estado: 'completada' | 'no_asistio') {
+export async function cambiarEstadoReservaAdmin(id: string, estado: 'completada' | 'no_asistio' | 'cancelada') {
   const { data } = await api.patch(
     `/admin/reservas/${id}/estado`,
     { estado },
@@ -82,3 +145,5 @@ export async function obtenerReporteOcupacion() {
   const { data } = await api.get('/admin/reportes/ocupacion', { headers: authHeaders() });
   return data;
 }
+
+
