@@ -70,9 +70,19 @@ export function ModalReserva({
   const [email, setEmail] = useState(usuarioActual?.email || '');
 
   const [cargandoHorarios, setCargandoHorarios] = useState(false);
+  const [errorHorarios, setErrorHorarios] = useState('');
   const [confirmando, setConfirmando] = useState(false);
   const [error, setError] = useState('');
   const [reservaConfirmada, setReservaConfirmada] = useState<any>(null);
+
+  // Sincronizar servicio cuando cambia servicioInicial o la lista de servicios
+  useEffect(() => {
+    if (servicioInicial) {
+      setServicio(servicioInicial);
+    } else if (servicios && servicios.length > 0 && !servicio) {
+      setServicio(servicios[0]);
+    }
+  }, [servicioInicial, servicios]);
 
   // Escuchar tecla Escape para cerrar modal
   useEffect(() => {
@@ -93,25 +103,32 @@ export function ModalReserva({
   // Cuando cambia el servicio, actualizar diseños
   useEffect(() => {
     if (!servicio) return;
+    if (!servicio?.id) return;
     setDiseno(undefined);
     obtenerDisenos(servicio.id)
       .then(setDisenos)
       .catch(console.error);
-  }, [servicio]);
+  }, [servicio?.id]);
 
   // Cuando cambia fecha o servicio, cargar horarios disponibles
   useEffect(() => {
     if (!fecha || !servicio) return;
+    if (!fecha || !servicio?.id) return;
     setCargandoHorarios(true);
+    setErrorHorarios('');
     setHora('');
     obtenerDisponibilidad(fecha, servicio.id)
       .then((slots) => setHorarios(slots || []))
+      .then((slots) => {
+        setHorarios(slots || []);
+      })
       .catch((err) => {
         console.error('Error al cargar horarios:', err);
+        setErrorHorarios('Error al conectar con el servidor para consultar disponibilidad.');
         setHorarios([]);
       })
       .finally(() => setCargandoHorarios(false));
-  }, [fecha, servicio]);
+  }, [fecha, servicio?.id]);
 
   const precioTotal = (servicio?.precioBase || 0) + (diseno?.incrementoPrecio || 0);
 
@@ -365,6 +382,39 @@ export function ModalReserva({
                 <div className="horarios-loading-state">
                   <div className="spinner-mini" />
                   <span>Consultando disponibilidad en tiempo real...</span>
+                </div>
+              ) : errorHorarios ? (
+                <div className="horarios-empty-state error">
+                  <AlertCircle size={24} style={{ color: '#ef4444' }} />
+                  <div>
+                    <strong style={{ color: '#dc2626' }}>{errorHorarios}</strong>
+                    <button
+                      type="button"
+                      style={{
+                        display: 'block',
+                        marginTop: '0.4rem',
+                        fontSize: '0.82rem',
+                        color: 'var(--primary)',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                      }}
+                      onClick={() => {
+                        if (fecha && servicio?.id) {
+                          setCargandoHorarios(true);
+                          setErrorHorarios('');
+                          obtenerDisponibilidad(fecha, servicio.id)
+                            .then((slots) => setHorarios(slots || []))
+                            .catch(() => setErrorHorarios('Error al conectar con el servidor.'))
+                            .finally(() => setCargandoHorarios(false));
+                        }
+                      }}
+                    >
+                      Reintentar consulta de disponibilidad
+                    </button>
+                  </div>
                 </div>
               ) : horarios.length === 0 ? (
                 <div className="horarios-empty-state">
