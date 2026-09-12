@@ -26,7 +26,10 @@ export async function resolverTenant(req: Request, res: Response, next: NextFunc
     const slugParam = (req.params.slug || req.params.empresaSlug)?.trim();
     const slugQuery = ((req.query.empresa_slug || req.query.tenant) as string)?.trim();
 
-    const slug = slugHeader || slugParam || slugQuery || DEFAULT_SLUG;
+    let slug = slugHeader || slugParam || slugQuery || DEFAULT_SLUG;
+    if (slug.toLowerCase() === 'jd-nails') {
+      slug = 'jc-nails';
+    }
 
     const empresa = await prisma.empresa.findUnique({
       where: { slug: slug.toLowerCase() },

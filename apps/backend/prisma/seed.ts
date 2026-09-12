@@ -48,47 +48,64 @@ async function main() {
     },
   });
 
-  // 2. JC Nails
-  // Se conserva para JC Nails la paleta que tenía Belle Slot Studio.
+  // 2. JC Nails (JC Nail Salon)
+  const jcConfig = {
+    nombre: 'JC Nail Salon',
+    direccion: 'Sede Principal JC Nails',
+    telefonoWhatsapp: '+57 305 318 0624',
+    emailContacto: 'contacto@jcnails.com',
+    horarioApertura: '07:00',
+    horarioCierre: '19:00',
+    diasAtencion: ['Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    duracionBloqueMinutos: 30,
+    horasAnticipacionCancelacion: 12,
+    textoBannerPrecio:
+      'Precios oficiales JC Nail Salon. El costo final puede variar según la técnica de diseño o decoración seleccionada.',
+    colorPrimario: '#613d2d',
+    colorSecundario: '#3d2314',
+    colorAcento: '#c59b6d',
+    colorFondo: '#fcf7f4',
+    personalizacion: {
+      instagram: 'Jc.nails15',
+      telefono: '3053180624',
+      textoHorario: 'Martes a Viernes: 9am - 12pm | 1pm - 7pm (Nov-Dic desde 7am)',
+      pausaAlmuerzo: {
+        inicio: '12:00',
+        fin: '13:00',
+      },
+      horarioEstacional: {
+        activo: true,
+        temporadas: [
+          {
+            nombre: 'feb-oct',
+            meses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            turnos: [
+              { inicio: '09:00', fin: '12:00' },
+              { inicio: '13:00', fin: '19:00' },
+            ],
+          },
+          {
+            nombre: 'nov-dic',
+            meses: [11, 12],
+            turnos: [
+              { inicio: '07:00', fin: '12:00' },
+              { inicio: '13:00', fin: '19:00' },
+            ],
+          },
+        ],
+      },
+    },
+  };
+
   const jcNails = await prisma.empresa.upsert({
     where: { slug: 'jc-nails' },
-    update: {
-      nombre: 'JC Nails',
-      direccion: 'Por configurar',
-      telefonoWhatsapp: 'Por configurar',
-      emailContacto: 'Por configurar',
-      horarioApertura: '09:00',
-      horarioCierre: '18:00',
-      diasAtencion: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-      duracionBloqueMinutos: 30,
-      horasAnticipacionCancelacion: 12,
-      textoBannerPrecio:
-        'El valor mostrado es el precio base del servicio. El costo final puede variar según el diseño seleccionado.',
-      colorPrimario: '#d94676',
-      colorSecundario: '#8c1e40',
-      colorAcento: '#c29057',
-      colorFondo: '#faf6f8',
-    },
+    update: jcConfig,
     create: {
       id: 'empresa-jc-nails',
-      nombre: 'JC Nails',
       slug: 'jc-nails',
-      direccion: 'Por configurar',
-      telefonoWhatsapp: 'Por configurar',
-      emailContacto: 'Por configurar',
-      horarioApertura: '09:00',
-      horarioCierre: '18:00',
-      diasAtencion: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-      duracionBloqueMinutos: 30,
-      horasAnticipacionCancelacion: 12,
-      textoBannerPrecio:
-        'El valor mostrado es el precio base del servicio. El costo final puede variar según el diseño seleccionado.',
-      colorPrimario: '#d94676',
-      colorSecundario: '#8c1e40',
-      colorAcento: '#c29057',
-      colorFondo: '#faf6f8',
       plan: 'pro',
       activo: true,
+      ...jcConfig,
     },
   });
 
@@ -200,27 +217,77 @@ async function main() {
     }
   }
 
-  // 7. Servicios JC Nails
+  // 7. Servicios JC Nails (catálogo oficial y dipping 55mil)
   const serviciosJcNails = [
     {
-      nombre: 'Manicure semipermanente',
+      nombre: 'Manicura Tradicional',
       descripcion:
-        'Manicure con preparación de uñas, cuidado de cutícula y esmaltado semipermanente.',
+        'Limpieza profunda, cuidado de cutícula, limado y esmaltado tradicional de secado rápido.',
+      duracionMinutos: 45,
+      precioBase: 20000,
+    },
+    {
+      nombre: 'Manicura Semipermanente',
+      descripcion:
+        'Preparación meticulosa de uña y cutícula, esmaltado semipermanente de alta duración y brillo.',
       duracionMinutos: 60,
+      precioBase: 50000,
+    },
+    {
+      nombre: 'Base Rubber',
+      descripcion:
+        'Nivelación, refuerzo estructural y esmaltado con base rubber para uñas naturales más fuertes.',
+      duracionMinutos: 60,
+      precioBase: 55000,
+    },
+    {
+      nombre: 'Dipping',
+      descripcion:
+        'Técnica de inmersión en polvo acrílico enriquecido, ligera, resistente y duradera sin lámpara UV.',
+      duracionMinutos: 60,
+      precioBase: 55000,
+    },
+    {
+      nombre: 'Press On',
+      descripcion:
+        'Aplicación y sellado profesional de sistema de tips press on personalizados con máxima adherencia.',
+      duracionMinutos: 75,
+      precioBase: 65000,
+    },
+    {
+      nombre: 'Retoque Press On',
+      descripcion:
+        'Mantenimiento, ajuste, rebalanceo y sellado de sistema press on.',
+      duracionMinutos: 60,
+      precioBase: 60000,
+    },
+    {
+      nombre: 'Poligel',
+      descripcion:
+        'Esculpido y extensión con poligel híbrido, logrando uñas ligeras, resistentes y de aspecto natural.',
+      duracionMinutos: 90,
+      precioBase: 80000,
+    },
+    {
+      nombre: 'Retoque Poligel',
+      descripcion:
+        'Mantenimiento y relleno de crecimiento para uñas esculpidas en poligel.',
+      duracionMinutos: 75,
+      precioBase: 65000,
+    },
+    {
+      nombre: 'Pedicura Tradicional',
+      descripcion:
+        'Cuidado completo de pies con exfoliación, hidratación, corte y esmaltado tradicional.',
+      duracionMinutos: 45,
       precioBase: 25000,
     },
     {
-      nombre: 'Pedicure semipermanente',
+      nombre: 'Pedicura Semipermanente',
       descripcion:
-        'Pedicure con cuidado de cutícula, limado y esmaltado semipermanente.',
+        'Pedicura estética completa con esmaltado semipermanente de larga duración.',
       duracionMinutos: 60,
-      precioBase: 35000,
-    },
-    {
-      nombre: 'Nail Art',
-      descripcion: 'Diseño personalizado para complementar el servicio de manicure.',
-      duracionMinutos: 30,
-      precioBase: 10000,
+      precioBase: 50000,
     },
   ];
 
@@ -229,10 +296,51 @@ async function main() {
       where: { nombre: servicio.nombre, empresaId: jcNails.id },
     });
 
+    let sId = existente?.id;
     if (!existente) {
-      await prisma.servicio.create({
+      const nuevo = await prisma.servicio.create({
         data: { empresaId: jcNails.id, ...servicio },
       });
+      sId = nuevo.id;
+    } else {
+      await prisma.servicio.update({
+        where: { id: existente.id },
+        data: servicio,
+      });
+    }
+
+    if (servicio.nombre === 'Manicura Semipermanente' && sId) {
+      const disenos = [
+        {
+          nombre: 'Diseño Francés Clásico / Microfrench',
+          incrementoPrecio: 10000,
+          servicioId: sId,
+        },
+        {
+          nombre: 'Nail Art Estrellas & Gemas (Star Nails)',
+          incrementoPrecio: 15000,
+          servicioId: sId,
+        },
+        {
+          nombre: 'Efecto Glazed / Espejo Aurora',
+          incrementoPrecio: 12000,
+          servicioId: sId,
+        },
+        {
+          nombre: 'Nail Art Floral a Mano Alzada',
+          incrementoPrecio: 15000,
+          servicioId: sId,
+        },
+      ];
+
+      for (const d of disenos) {
+        const dExistente = await prisma.diseno.findFirst({
+          where: { nombre: d.nombre, servicioId: sId },
+        });
+        if (!dExistente) {
+          await prisma.diseno.create({ data: d });
+        }
+      }
     }
   }
 
