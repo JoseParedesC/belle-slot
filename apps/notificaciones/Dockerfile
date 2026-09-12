@@ -1,19 +1,32 @@
 FROM node:20-slim AS builder
+
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm ci --only=dev
+
+COPY package.json package-lock.json ./
+
+COPY apps/notificaciones/package.json ./apps/notificaciones/package.json
+
+RUN npm ci
 
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+
+RUN npm run build --workspace=apps/notificaciones
+
 
 FROM node:20-slim
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+COPY apps/notificaciones/package.json ./apps/notificaciones/package.json
+
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/apps/notificaciones/dist ./apps/notificaciones/dist
+
+WORKDIR /app/apps/notificaciones
 
 EXPOSE 3001
+
 CMD ["npm", "start"]
