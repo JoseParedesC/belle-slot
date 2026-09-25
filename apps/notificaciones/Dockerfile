@@ -1,19 +1,33 @@
+# Etapa 1: Build
 FROM node:20-slim AS builder
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm ci --only=dev
 
-COPY . .
-RUN npx prisma generate
+WORKDIR /app
+
+# Copia los package files asumiendo contexto en /apps/notificaciones
+COPY package*.json ./
+COPY tsconfig*.json ./
+
+RUN npm install
+
+# Copia el código fuente del microservicio
+COPY src ./src
+
+# Compila TypeScript
 RUN npm run build
 
-FROM node:20-slim
+# Etapa 2: Runner de producción
+FROM node:20-slim AS runner
+
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+
+ENV NODE_ENV=production
+
+# Copia dependencias y compilados
+COPY package*.json ./
+RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3001
-CMD ["npm", "start"]
+
+CMD ["node", "dist/main.js"]
