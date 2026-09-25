@@ -1,5 +1,9 @@
 FROM node:20-slim AS builder
 
+# URL pública del backend, incrustada en el bundle en tiempo de build
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 WORKDIR /app
 
 COPY package.json ./
