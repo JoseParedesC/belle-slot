@@ -47,7 +47,10 @@ exports.saasRouter.get('/empresas', async (_req, res) => {
 // GET /api/saas/empresas/:slug -> Perfil público de un salón
 exports.saasRouter.get('/empresas/:slug', async (req, res) => {
     try {
-        const { slug } = req.params;
+        let { slug } = req.params;
+        if (slug.toLowerCase() === 'jd-nails') {
+            slug = 'jc-nails';
+        }
         const empresa = await database_1.prisma.empresa.findUnique({
             where: { slug: slug.toLowerCase() },
             include: {

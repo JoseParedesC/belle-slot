@@ -13,10 +13,15 @@ const DEFAULT_SLUG = 'belle-slot';
  */
 async function resolverTenant(req, res, next) {
     try {
-        const slugHeader = req.headers['x-tenant-slug']?.trim();
+        const slugHeaderValue = req.headers['x-tenant-slug'];
+        const slugHeader = Array.isArray(slugHeaderValue) ? slugHeaderValue[0] : slugHeaderValue;
         const slugParam = (req.params.slug || req.params.empresaSlug)?.trim();
-        const slugQuery = (req.query.empresa_slug || req.query.tenant)?.trim();
-        const slug = slugHeader || slugParam || slugQuery || DEFAULT_SLUG;
+        const slugQueryValue = req.query.empresa_slug ?? req.query.tenant;
+        const slugQuery = Array.isArray(slugQueryValue) ? slugQueryValue[0] : slugQueryValue;
+        let slug = (slugHeader || slugParam || slugQuery || DEFAULT_SLUG)?.toString().trim();
+        if (slug.toLowerCase() === 'jd-nails') {
+            slug = 'jc-nails';
+        }
         const empresa = await database_1.prisma.empresa.findUnique({
             where: { slug: slug.toLowerCase() },
         });
