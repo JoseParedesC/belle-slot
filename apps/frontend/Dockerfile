@@ -19,14 +19,10 @@ FROM node:20-slim
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+RUN npm install -g serve
 
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
+COPY --from=builder /app/apps/frontend/dist ./dist
 
 EXPOSE 5173
 
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-5173}"]
