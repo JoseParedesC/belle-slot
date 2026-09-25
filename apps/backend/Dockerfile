@@ -39,6 +39,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+WORKDIR /app/apps/backend
+
 EXPOSE 3000
 
 CMD ["node", "dist/main.js"]
