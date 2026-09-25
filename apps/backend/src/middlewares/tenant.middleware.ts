@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
-import { Empresa } from '@prisma/client';
+
+type Empresa = Prisma.EmpresaGetPayload<{}>;
 
 declare global {
   namespace Express {
@@ -22,11 +24,13 @@ const DEFAULT_SLUG = 'belle-slot';
  */
 export async function resolverTenant(req: Request, res: Response, next: NextFunction) {
   try {
-    const slugHeader = (req.headers['x-tenant-slug'] as string)?.trim();
+    const slugHeaderValue = req.headers['x-tenant-slug'];
+    const slugHeader = Array.isArray(slugHeaderValue) ? slugHeaderValue[0] : slugHeaderValue;
     const slugParam = (req.params.slug || req.params.empresaSlug)?.trim();
-    const slugQuery = ((req.query.empresa_slug || req.query.tenant) as string)?.trim();
+    const slugQueryValue = req.query.empresa_slug ?? req.query.tenant;
+    const slugQuery = Array.isArray(slugQueryValue) ? slugQueryValue[0] : slugQueryValue;
 
-    let slug = slugHeader || slugParam || slugQuery || DEFAULT_SLUG;
+    let slug = (slugHeader || slugParam || slugQuery || DEFAULT_SLUG)?.toString().trim();
     if (slug.toLowerCase() === 'jd-nails') {
       slug = 'jc-nails';
     }
