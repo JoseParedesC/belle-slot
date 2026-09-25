@@ -1,529 +1,226 @@
-import { useState, useEffect } from 'react';
-import {
-  X,
-  Calendar as CalendarIcon,
-  Clock,
-  Sparkles,
-  User,
-  Phone,
-  Mail,
-  CheckCircle,
-  AlertCircle,
-  Scissors,
-  Check,
-  ArrowRight
-} from 'lucide-react';
-import { Servicio, Diseno, Configuracion, Usuario } from '../../types';
-import {
-  obtenerDisenos,
-  obtenerDisponibilidad,
-  crearReserva,
-  obtenerConfiguracion,
-  obtenerUsuarioActual
-} from '../../services/api';
-import { BannerAvisoPrecio } from '../banner-aviso-precio/BannerAvisoPrecio';
+import React, { useState, useEffect } from 'react';
+import { Servicio, Diseno } from '../../types';
+import { api } from '../../services/api';
 
-interface Props {
-  fecha: string; // YYYY-MM-DD
-  servicios: Servicio[];
-  servicioInicial?: Servicio;
+interface ModalReservaProps {
+  fecha: string;
+  servicios?: Servicio[];
+  servicioInicial?: Servicio | null;
+  disenoInicial?: Diseno | null;
+  horaInicial?: string | null;
   onCerrar: () => void;
-  onReservaExitosa?: (reserva: any) => void;
+  onReservaExitosa: () => void;
 }
 
-const NOMBRES_MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
-
-const NOMBRES_DIAS = [
-  'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
-];
-
-function formatearFechaLegible(fechaStr: string): string {
-  if (!fechaStr) return '';
-  const [y, m, d] = fechaStr.split('-').map(Number);
-  const fechaObj = new Date(y, m - 1, d);
-  const diaSemana = NOMBRES_DIAS[fechaObj.getDay()];
-  const mesNombre = NOMBRES_MESES[m - 1];
-  return `${diaSemana}, ${d} de ${mesNombre} de ${y}`;
-}
-
-export function ModalReserva({
+export const ModalReserva: React.FC<ModalReservaProps> = ({
   fecha,
-  servicios,
-  servicioInicial,
+  servicios = [],
+  servicioInicial = null,
+  disenoInicial = null,
+  horaInicial = null,
   onCerrar,
-  onReservaExitosa
-}: Props) {
-  const [servicio, setServicio] = useState<Servicio | undefined>(servicioInicial || servicios[0]);
-  const [disenos, setDisenos] = useState<Diseno[]>([]);
-  const [diseno, setDiseno] = useState<Diseno | undefined>();
-  const [horarios, setHorarios] = useState<string[]>([]);
-  const [hora, setHora] = useState('');
-  const [config, setConfig] = useState<Configuracion | null>(null);
+  onReservaExitosa,
+}) => {
+  const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(servicioInicial);
+  const [disenoSeleccionado, setDisenoSeleccionado] = useState<Diseno | null>(disenoInicial);
+  const [hora, setHora] = useState<string>(horaInicial || '10:00');
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
+  const [notas, setNotas] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const usuarioActual: Usuario | null = obtenerUsuarioActual();
-
-  const [nombre, setNombre] = useState(usuarioActual?.nombre || '');
-  const [telefono, setTelefono] = useState(usuarioActual?.telefono || '');
-  const [email, setEmail] = useState(usuarioActual?.email || '');
-
-  const [cargandoHorarios, setCargandoHorarios] = useState(false);
-  const [errorHorarios, setErrorHorarios] = useState('');
-  const [confirmando, setConfirmando] = useState(false);
-  const [error, setError] = useState('');
-  const [reservaConfirmada, setReservaConfirmada] = useState<any>(null);
-
-  // Sincronizar servicio cuando cambia servicioInicial o la lista de servicios
   useEffect(() => {
     if (servicioInicial) {
-      setServicio(servicioInicial);
-    } else if (servicios && servicios.length > 0 && !servicio) {
-      setServicio(servicios[0]);
+      setServicioSeleccionado(servicioInicial);
     }
-  }, [servicioInicial, servicios]);
+  }, [servicioInicial]);
 
-  // Escuchar tecla Escape para cerrar modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCerrar();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCerrar]);
-
-  // Cargar configuración de negocio
-  useEffect(() => {
-    obtenerConfiguracion().then(setConfig).catch(console.error);
-  }, []);
-
-  // Cuando cambia el servicio, actualizar diseños
-  useEffect(() => {
-    if (!servicio) return;
-    if (!servicio?.id) return;
-    setDiseno(undefined);
-    obtenerDisenos(servicio.id)
-      .then(setDisenos)
-      .catch(console.error);
-  }, [servicio?.id]);
-
-  // Cuando cambia fecha o servicio, cargar horarios disponibles
-  useEffect(() => {
-    if (!fecha || !servicio) return;
-    if (!fecha || !servicio?.id) return;
-    setCargandoHorarios(true);
-    setErrorHorarios('');
-    setHora('');
-    obtenerDisponibilidad(fecha, servicio.id)
-      .then((slots) => setHorarios(slots || []))
-      .catch((err) => {
-        console.error('Error al cargar horarios:', err);
-        setErrorHorarios('Error al conectar con el servidor para consultar disponibilidad.');
-        setHorarios([]);
-      })
-      .finally(() => setCargandoHorarios(false));
-  }, [fecha, servicio?.id]);
-
-  const precioTotal = (servicio?.precioBase || 0) + (diseno?.incrementoPrecio || 0);
-
-  const handleConfirmar = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!servicio || !fecha || !hora || !nombre.trim() || !telefono.trim()) {
-      setError('Por favor completa todos los campos requeridos (servicio, hora, nombre y teléfono).');
+    if (!servicioSeleccionado || !fecha || !hora) {
+      setError('Por favor selecciona un servicio, fecha y hora.');
       return;
     }
 
-    setConfirmando(true);
-    setError('');
+    setLoading(true);
+    setError(null);
 
-    try {
-      const res = await crearReserva({
-        cliente: {
-          nombre: nombre.trim(),
-          telefono: telefono.trim(),
-          email: email.trim() || undefined,
-        },
-        servicio_id: servicio.id,
-        diseno_id: diseno?.id,
-        fecha,
-        hora_inicio: hora,
+    const payload = {
+      servicioId: servicioSeleccionado.id,
+      disenoId: disenoSeleccionado ? disenoSeleccionado.id : undefined,
+      fecha,
+      hora,
+      cliente: {
+        nombre,
+        telefono,
+        email: email || undefined,
+      },
+      notas,
+    };
+
+    // Llamada directa usando la instancia Axios y un solo .then() sin tipos any implícitos
+    api.post('/reservas', payload)
+      .then((res: { data: any }) => {
+        if (res.data) {
+          onReservaExitosa();
+          onCerrar();
+        }
+      })
+      .catch((err: any) => {
+        console.error('Error al crear la reserva:', err);
+        setError(err?.response?.data?.message || err?.message || 'Error al procesar la reserva. Intenta de nuevo.');
+      })
+      .finally(() => {
+        setLoading(false);
       });
-
-      setReservaConfirmada(res);
-      if (onReservaExitosa) {
-        onReservaExitosa(res);
-      }
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'No se pudo completar la reserva. Intenta de nuevo.');
-    } finally {
-      setConfirmando(false);
-    }
   };
 
+  const precioTotal =
+    (servicioSeleccionado?.precioBase || 0) + (disenoSeleccionado?.precioBase || 0);
+
   return (
-    <div className="modal-overlay" onClick={onCerrar}>
-      <div className="modal-card modal-reserva-dialog" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="modal-close-btn"
-          onClick={onCerrar}
-          aria-label="Cerrar modal"
-        >
-          <X size={20} />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between border-b pb-3">
+          <h3 className="text-xl font-semibold text-gray-800">
+            Confirmar Reserva
+          </h3>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+          >
+            ✕
+          </button>
+        </div>
 
-        {reservaConfirmada ? (
-          /* Pantalla de Confirmación / Voucher Digital */
-          <div className="reserva-voucher-exito">
-            <div className="voucher-icon-anim">
-              <CheckCircle size={58} className="voucher-check-icon" />
-            </div>
-
-            <div className="modal-badge success">
-              <Sparkles size={16} /> ¡Cita Reservada con Éxito!
-            </div>
-
-            <h2 className="modal-title">¡Te esperamos en {config?.nombreNegocio || 'Belle Slot'}!</h2>
-            <p className="voucher-subtitle">
-              Hemos registrado tu reserva. Te enviaremos un recordatorio por WhatsApp antes de tu cita.
-            </p>
-
-            <div className="voucher-card">
-              <div className="voucher-header">
-                <span className="voucher-brand">{config?.nombreNegocio || 'Belle Slot Studio'}</span>
-                <span className="voucher-badge-estado">Confirmada</span>
-              </div>
-
-              <div className="voucher-details-grid">
-                <div className="voucher-item">
-                  <span className="voucher-label">Fecha</span>
-                  <strong className="voucher-value">{formatearFechaLegible(fecha)}</strong>
-                </div>
-
-                <div className="voucher-item">
-                  <span className="voucher-label">Horario</span>
-                  <strong className="voucher-value">{reservaConfirmada.horaInicio || hora} hrs</strong>
-                </div>
-
-                <div className="voucher-item">
-                  <span className="voucher-label">Tratamiento</span>
-                  <strong className="voucher-value">{servicio?.nombre}</strong>
-                </div>
-
-                <div className="voucher-item">
-                  <span className="voucher-label">Diseño</span>
-                  <strong className="voucher-value">{diseno ? diseno.nombre : 'Básico / Estándar'}</strong>
-                </div>
-
-                <div className="voucher-item">
-                  <span className="voucher-label">Clienta</span>
-                  <strong className="voucher-value">{nombre}</strong>
-                </div>
-
-                <div className="voucher-item">
-                  <span className="voucher-label">Precio Estimado</span>
-                  <strong className="voucher-value total">${Number(precioTotal).toLocaleString()}</strong>
-                </div>
-              </div>
-
-              <div className="voucher-barcode-row">
-                <div className="barcode-mock" />
-                <span className="voucher-id-text">ID: {reservaConfirmada.id?.substring(0, 8).toUpperCase() || 'BELLE-RES'}</span>
-              </div>
-            </div>
-
-            <div className="voucher-actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => {
-                  setReservaConfirmada(null);
-                  setHora('');
-                }}
-              >
-                Agendar otra cita
-              </button>
-
-              <button
-                type="button"
-                className="btn-primary-action"
-                onClick={onCerrar}
-              >
-                Listo, cerrar
-              </button>
-            </div>
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
           </div>
-        ) : (
-          /* Formulario de Reserva Guiado */
-          <form onSubmit={handleConfirmar} className="modal-reserva-content">
-            <div className="modal-header">
-              <div className="modal-date-badge">
-                <CalendarIcon size={16} />
-                <span>{formatearFechaLegible(fecha)}</span>
-              </div>
-              <h2 className="modal-title">Completa tu Reserva</h2>
-              <p className="modal-subtitle">
-                Personaliza tu servicio, elige la hora disponible e ingresa tus datos
-              </p>
-            </div>
-
-            {error && (
-              <div className="error-alert">
-                <AlertCircle size={18} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* PASO 1: Elegir Servicio */}
-            <div className="modal-section">
-              <div className="section-label-group">
-                <span className="step-pill">1</span>
-                <div>
-                  <h3 className="section-heading">Selecciona tu Servicio</h3>
-                  <p className="section-subtext">Elige el cuidado ideal para tus uñas</p>
-                </div>
-              </div>
-
-              <div className="servicios-cards-grid">
-                {servicios.map((s) => {
-                  const seleccionado = servicio?.id === s.id;
-                  return (
-                    <div
-                      key={s.id}
-                      className={`servicio-option-card ${seleccionado ? 'activo' : ''}`}
-                      onClick={() => setServicio(s)}
-                    >
-                      <div className="card-top-row">
-                        <span className="card-title">{s.nombre}</span>
-                        {seleccionado && <Check size={18} className="check-icon-active" />}
-                      </div>
-                      {s.descripcion && <p className="card-description">{s.descripcion}</p>}
-                      <div className="card-meta-row">
-                        <span className="meta-pill duration">
-                          <Clock size={13} /> {s.duracionMinutos} min
-                        </span>
-                        <span className="meta-pill price">
-                          ${Number(s.precioBase).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* PASO 2: Elegir Diseño (si hay diseños disponibles) */}
-            {disenos.length > 0 && (
-              <div className="modal-section">
-                <div className="section-label-group">
-                  <span className="step-pill">2</span>
-                  <div>
-                    <h3 className="section-heading">Diseño o Decoración</h3>
-                    <p className="section-subtext">Opciones de nail art para tu estilo</p>
-                  </div>
-                </div>
-
-                <div className="disenos-cards-grid">
-                  <div
-                    className={`diseno-option-card ${!diseno ? 'activo' : ''}`}
-                    onClick={() => setDiseno(undefined)}
-                  >
-                    <div className="card-top-row">
-                      <span className="card-title">Sin diseño adicional</span>
-                      {!diseno && <Check size={16} className="check-icon-active" />}
-                    </div>
-                    <span className="card-price-tag included">Incluido en base</span>
-                  </div>
-
-                  {disenos.map((d) => {
-                    const seleccionado = diseno?.id === d.id;
-                    return (
-                      <div
-                        key={d.id}
-                        className={`diseno-option-card ${seleccionado ? 'activo' : ''}`}
-                        onClick={() => setDiseno(d)}
-                      >
-                        <div className="card-top-row">
-                          <span className="card-title">{d.nombre}</span>
-                          {seleccionado && <Check size={16} className="check-icon-active" />}
-                        </div>
-                        <span className="card-price-tag extra">
-                          +${Number(d.incrementoPrecio).toLocaleString()}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Banner de aviso de precio si aplica */}
-            {config?.textoBannerPrecio && (
-              <BannerAvisoPrecio texto={config.textoBannerPrecio} />
-            )}
-
-            {/* PASO 3: Elegir Horario */}
-            <div className="modal-section">
-              <div className="section-label-group">
-                <span className="step-pill">{disenos.length > 0 ? '3' : '2'}</span>
-                <div>
-                  <h3 className="section-heading">Horarios Disponibles para este día</h3>
-                  <p className="section-subtext">Selecciona la hora de inicio de tu cita</p>
-                </div>
-              </div>
-
-              {cargandoHorarios ? (
-                <div className="horarios-loading-state">
-                  <div className="spinner-mini" />
-                  <span>Consultando disponibilidad en tiempo real...</span>
-                </div>
-              ) : errorHorarios ? (
-                <div className="horarios-empty-state error">
-                  <AlertCircle size={24} style={{ color: '#ef4444' }} />
-                  <div>
-                    <strong style={{ color: '#dc2626' }}>{errorHorarios}</strong>
-                    <button
-                      type="button"
-                      style={{
-                        display: 'block',
-                        marginTop: '0.4rem',
-                        fontSize: '0.82rem',
-                        color: 'var(--primary)',
-                        textDecoration: 'underline',
-                        cursor: 'pointer',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                      }}
-                      onClick={() => {
-                        if (fecha && servicio?.id) {
-                          setCargandoHorarios(true);
-                          setErrorHorarios('');
-                          obtenerDisponibilidad(fecha, servicio.id)
-                            .then((slots) => setHorarios(slots || []))
-                            .catch(() => setErrorHorarios('Error al conectar con el servidor.'))
-                            .finally(() => setCargandoHorarios(false));
-                        }
-                      }}
-                    >
-                      Reintentar consulta de disponibilidad
-                    </button>
-                  </div>
-                </div>
-              ) : horarios.length === 0 ? (
-                <div className="horarios-empty-state">
-                  <AlertCircle size={24} />
-                  <div>
-                    <strong>No hay horarios libres para esta fecha</strong>
-                    <p>Por favor selecciona otro día en el calendario.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="horarios-chips-grid">
-                  {horarios.map((h) => {
-                    const seleccionado = hora === h;
-                    return (
-                      <button
-                        key={h}
-                        type="button"
-                        className={`btn-horario-chip ${seleccionado ? 'activo' : ''}`}
-                        onClick={() => setHora(h)}
-                      >
-                        <Clock size={14} />
-                        <span>{h}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* PASO 4: Datos del Cliente */}
-            <div className="modal-section">
-              <div className="section-label-group">
-                <span className="step-pill">{disenos.length > 0 ? '4' : '3'}</span>
-                <div>
-                  <h3 className="section-heading">Tus Datos de Contacto</h3>
-                  <p className="section-subtext">Para confirmar y enviarte el recordatorio</p>
-                </div>
-              </div>
-
-              <div className="form-fields-grid">
-                <div className="input-with-icon">
-                  <User size={18} className="input-icon" />
-                  <input
-                    type="text"
-                    placeholder="Nombre y Apellido *"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="input-with-icon">
-                  <Phone size={18} className="input-icon" />
-                  <input
-                    type="tel"
-                    placeholder="Teléfono / WhatsApp *"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="input-with-icon full-width">
-                  <Mail size={18} className="input-icon" />
-                  <input
-                    type="email"
-                    placeholder="Correo electrónico (opcional para confirmación)"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Resumen de Precio y Acción Final */}
-            <div className="modal-reserva-footer">
-              <div className="resumen-rapido-box">
-                <div className="resumen-linea">
-                  <span>Tratamiento:</span>
-                  <strong>{servicio?.nombre}</strong>
-                </div>
-                {diseno && (
-                  <div className="resumen-linea">
-                    <span>Diseño:</span>
-                    <strong>{diseno.nombre} (+${Number(diseno.incrementoPrecio).toLocaleString()})</strong>
-                  </div>
-                )}
-                <div className="resumen-total-linea">
-                  <span>Total Estimado:</span>
-                  <span className="precio-total-badge">${Number(precioTotal).toLocaleString()}</span>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="btn-primary-action submit-reserva-btn"
-                disabled={confirmando || !hora || !nombre.trim() || !telefono.trim()}
-              >
-                {confirmando ? (
-                  <span>Agendando tu cita...</span>
-                ) : (
-                  <>
-                    <span>Confirmar Cita</span>
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
         )}
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+            {servicios.length > 0 && !servicioInicial ? (
+              <div className="mb-2">
+                <label className="block font-medium text-gray-700">Servicio *</label>
+                <select
+                  required
+                  value={servicioSeleccionado?.id || ''}
+                  onChange={(e) => {
+                    const sel = servicios.find((s) => s.id === e.target.value) || null;
+                    setServicioSeleccionado(sel);
+                  }}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                >
+                  <option value="">Selecciona un servicio</option>
+                  {servicios.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre} - ${s.precioBase?.toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <p><strong>Servicio:</strong> {servicioSeleccionado?.nombre}</p>
+            )}
+
+            {disenoSeleccionado && (
+              <p><strong>Diseño:</strong> {disenoSeleccionado.nombre}</p>
+            )}
+            <p><strong>Fecha:</strong> {fecha}</p>
+            <div className="mt-2">
+              <label className="block text-xs font-semibold uppercase text-gray-600">Hora *</label>
+              <input
+                type="time"
+                required
+                value={hora}
+                onChange={(e) => setHora(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              />
+            </div>
+
+            <p className="mt-2 font-semibold text-pink-600">
+              Total estimado: ${precioTotal.toLocaleString()}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Nombre Completo *
+            </label>
+            <input
+              type="text"
+              required
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Ej. María Pérez"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Teléfono / WhatsApp *
+            </label>
+            <input
+              type="tel"
+              required
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Ej. +57 300 123 4567"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Correo Electrónico (opcional)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="ejemplo@correo.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Notas adicionales
+            </label>
+            <textarea
+              rows={2}
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Alergias, detalles especiales o preferencias..."
+            />
+          </div>
+
+          <div className="mt-5 flex justify-end space-x-3 border-t pt-4">
+            <button
+              type="button"
+              onClick={onCerrar}
+              disabled={loading}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-md bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none disabled:opacity-50"
+            >
+              {loading ? 'Confirmando...' : 'Confirmar Cita'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
-}
-
+};

@@ -1,32 +1,33 @@
+# Etapa 1: Build
 FROM node:20-slim AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copia los package files asumiendo contexto en /apps/notificaciones
+COPY package*.json ./
+COPY tsconfig*.json ./
 
-COPY apps/notificaciones/package.json ./apps/notificaciones/package.json
+RUN npm install
 
-RUN npm ci
+# Copia el código fuente del microservicio
+COPY src ./src
 
-COPY . .
+# Compila TypeScript
+RUN npm run build
 
-RUN npm run build --workspace=apps/notificaciones
-
-
-FROM node:20-slim
+# Etapa 2: Runner de producción
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+ENV NODE_ENV=production
 
-COPY apps/notificaciones/package.json ./apps/notificaciones/package.json
+# Copia dependencias y compilados
+COPY package*.json ./
+RUN npm install --omit=dev
 
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/apps/notificaciones/dist ./apps/notificaciones/dist
-
-WORKDIR /app/apps/notificaciones
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3001
 
-CMD ["npm", "start"]
+CMD ["node", "dist/main.js"]

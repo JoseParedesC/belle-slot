@@ -1,41 +1,46 @@
+# Etapa 1: Base & Build
 FROM node:20-slim AS builder
 
+# Instalar openssl necesario para Prisma engine
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copiar archivos de dependencias
+COPY package*.json ./
+COPY prisma ./prisma/
 
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY packages/shared-config/package.json ./packages/shared-config/package.json
-COPY packages/shared-types/package.json ./packages/shared-types/package.json
+# Instalar dependencias completas
+RUN npm install
 
-RUN npm ci
-
-COPY . .
-
-WORKDIR /app/apps/backend
-
+# Generar el cliente de Prisma para el entorno Linux actual
 RUN npx prisma generate
+
+# Copiar código fuente y configuración de compilación
+COPY tsconfig.json ./
+COPY src ./src
+
+# Compilar TypeScript
 RUN npm run build
 
+# Etapa 2: Runner de producción
+FROM node:20-slim AS runner
 
-FROM node:20-slim
+# Instalar openssl en la etapa de ejecución
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+ENV NODE_ENV=production
 
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY packages/shared-config/package.json ./packages/shared-config/package.json
-COPY packages/shared-types/package.json ./packages/shared-types/package.json
-
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Copiar package.json y dependencias de producción
+COPY package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
 
 WORKDIR /app/apps/backend
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "dist/main.js"]

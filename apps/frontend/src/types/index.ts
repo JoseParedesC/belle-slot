@@ -39,6 +39,7 @@ export interface Diseno {
   nombre: string;
   incrementoPrecio: number;
   imagenReferenciaUrl?: string;
+  precioBase: number;
 }
 
 export interface Configuracion {
