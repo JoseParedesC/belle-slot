@@ -1,0 +1,39 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: manicure
+      POSTGRES_PASSWORD: manicure
+      POSTGRES_DB: manicure_reservas
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./apps/backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/backend/.env
+    depends_on:
+      - db
+
+  notificaciones:
+    build: ./apps/notificaciones
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./apps/notificaciones/.env
+
+  frontend:
+    build: ./apps/frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
