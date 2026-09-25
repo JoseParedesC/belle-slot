@@ -2,13 +2,13 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 COPY apps/frontend/package.json ./apps/frontend/package.json
 COPY packages/shared-config/package.json ./packages/shared-config/package.json
 COPY packages/shared-types/package.json ./packages/shared-types/package.json
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
@@ -19,14 +19,10 @@ FROM node:20-slim
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+RUN npm install -g serve
 
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
+COPY --from=builder /app/apps/frontend/dist ./dist
 
 EXPOSE 5173
 
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-5173}"]
