@@ -27,8 +27,6 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
 
-WORKDIR /app/apps/frontend
-
 EXPOSE 5173
 
 CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
