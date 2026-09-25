@@ -2,7 +2,7 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 COPY apps/frontend/package.json ./apps/frontend/package.json
 COPY packages/shared-config/package.json ./packages/shared-config/package.json
