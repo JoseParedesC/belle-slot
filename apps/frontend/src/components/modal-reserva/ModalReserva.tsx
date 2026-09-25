@@ -119,9 +119,6 @@ export function ModalReserva({
     setHora('');
     obtenerDisponibilidad(fecha, servicio.id)
       .then((slots) => setHorarios(slots || []))
-      .then((slots) => {
-        setHorarios(slots || []);
-      })
       .catch((err) => {
         console.error('Error al cargar horarios:', err);
         setErrorHorarios('Error al conectar con el servidor para consultar disponibilidad.');
