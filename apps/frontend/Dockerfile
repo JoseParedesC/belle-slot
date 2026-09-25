@@ -8,7 +8,7 @@ COPY apps/frontend/package.json ./apps/frontend/package.json
 COPY packages/shared-config/package.json ./packages/shared-config/package.json
 COPY packages/shared-types/package.json ./packages/shared-types/package.json
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
