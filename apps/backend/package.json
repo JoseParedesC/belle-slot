@@ -20,7 +20,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "prisma":{
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "prisma": "^5.18.0",
