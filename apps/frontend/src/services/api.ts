@@ -97,6 +97,25 @@ export async function obtenerConfiguracion() {
   return data;
 }
 
+// ---- Configuración de Disponibilidad (Admin) ----
+
+export async function obtenerConfiguracionAdmin() {
+  const { data } = await api.get('/admin/configuracion', { headers: authHeaders() });
+  return data;
+}
+
+export async function actualizarConfiguracionAdmin(payload: {
+  horarioApertura?: string;
+  horarioCierre?: string;
+  diasAtencion?: string[];
+  duracionBloqueMinutos?: number;
+  horasAnticipacionCancelacion?: number;
+  personalizacion?: any;
+}) {
+  const { data } = await api.patch('/admin/configuracion', payload, { headers: authHeaders() });
+  return data;
+}
+
 export async function obtenerDisponibilidad(fecha: string, servicioId: string) {
   const { data } = await api.get('/disponibilidad', {
     params: { fecha, servicio_id: servicioId },
