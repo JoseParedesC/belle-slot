@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import { empresaAtiendeEnFecha } from '../../utils/disponibilidad';
 
 interface Props {
   diaSeleccionado?: string; // YYYY-MM-DD
   onSeleccionarDia: (fechaStr: string) => void;
+  /** Días de la semana en los que la empresa atiende (ej. ["Lunes", "Martes", ...]), tal como está configurado en la base de datos. Si se omite, se asume que atiende todos los días. */
+  diasAtencion?: string[];
 }
 
 const MESES = [
@@ -21,7 +24,7 @@ function formatearFechaISO(year: number, month: number, day: number): string {
   return `${year}-${padZero(month + 1)}-${padZero(day)}`;
 }
 
-export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) {
+export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia, diasAtencion }: Props) {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
@@ -74,6 +77,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
       esMesActual: false,
       esHoy: fechaStr === hoyStr,
       esPasado: fechaObj < hoy,
+      esCerrado: !empresaAtiendeEnFecha(diasAtencion, fechaObj),
     });
   }
 
@@ -88,6 +92,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
       esMesActual: true,
       esHoy: fechaStr === hoyStr,
       esPasado: fechaObj < hoy,
+      esCerrado: !empresaAtiendeEnFecha(diasAtencion, fechaObj),
     });
   }
 
@@ -107,6 +112,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
       esMesActual: false,
       esHoy: fechaStr === hoyStr,
       esPasado: fechaObj < hoy,
+      esCerrado: !empresaAtiendeEnFecha(diasAtencion, fechaObj),
     });
   }
 
@@ -171,7 +177,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
         <div className="calendario-grid-dias">
           {celdas.map((c, index) => {
             const estaSeleccionado = diaSeleccionado === c.fechaStr;
-            const deshabilitado = c.esPasado;
+            const deshabilitado = c.esPasado || c.esCerrado;
 
             let claseCelda = 'calendario-dia-celda';
             if (!c.esMesActual) claseCelda += ' dia-otro-mes';
@@ -179,6 +185,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
             if (estaSeleccionado) claseCelda += ' dia-seleccionado';
             if (deshabilitado) claseCelda += ' dia-deshabilitado';
             else claseCelda += ' dia-disponible';
+            if (c.esCerrado && !c.esPasado) claseCelda += ' dia-cerrado-semana';
 
             return (
               <div
@@ -208,7 +215,9 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
                       <Sparkles size={11} /> Agendar
                     </span>
                   ) : (
-                    <span className="dia-bloqueado-label">No disponible</span>
+                    <span className="dia-bloqueado-label">
+                      {c.esCerrado && !c.esPasado ? 'Cerrado' : 'No disponible'}
+                    </span>
                   )}
                 </div>
               </div>
@@ -228,7 +237,7 @@ export function CalendarioMensual({ diaSeleccionado, onSeleccionarDia }: Props) 
         </div>
         <div className="legend-item">
           <span className="legend-dot bloqueado" />
-          <span>Fecha pasada</span>
+          <span>Fecha pasada o día sin atención</span>
         </div>
       </div>
     </div>
