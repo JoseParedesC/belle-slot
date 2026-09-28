@@ -111,7 +111,6 @@ export function Reservar() {
           <CalendarioMensual
             diaSeleccionado={diaSeleccionado || undefined}
             onSeleccionarDia={handleSeleccionarDia}
-            diasAtencion={diasAtencion}
           />
         </section>
 
