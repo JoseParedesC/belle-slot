@@ -1,9 +1,5 @@
 FROM node:20-slim AS builder
 
-# URL pública del backend, incrustada en el bundle en tiempo de build
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
 WORKDIR /app
 
 COPY package.json ./
@@ -23,10 +19,14 @@ FROM node:20-slim
 
 WORKDIR /app
 
-RUN npm install -g serve
+COPY package.json package-lock.json ./
 
-COPY --from=builder /app/apps/frontend/dist ./dist
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
 
 EXPOSE 5173
 
-CMD ["sh", "-c", "serve -s dist -l ${PORT:-5173}"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]

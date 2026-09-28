@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, User, Phone, Mail, MessageSquare, CalendarDays, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Servicio, Diseno } from '../../types';
-import { crearReserva } from '../../services/api';
+import { api } from '../../services/api';
 
 interface ModalReservaProps {
   fecha: string;
@@ -48,197 +47,179 @@ export const ModalReserva: React.FC<ModalReservaProps> = ({
     setLoading(true);
     setError(null);
 
-    crearReserva({
+    const payload = {
+      servicioId: servicioSeleccionado.id,
+      disenoId: disenoSeleccionado ? disenoSeleccionado.id : undefined,
+      fecha,
+      hora,
       cliente: {
         nombre,
         telefono,
         email: email || undefined,
       },
-      servicio_id: servicioSeleccionado.id,
-      diseno_id: disenoSeleccionado ? disenoSeleccionado.id : undefined,
-      fecha,
-      hora_inicio: hora,
-    })
-      .then((data: any) => {
-        if (data) {
+      notas,
+    };
+
+    // Llamada directa usando la instancia Axios y un solo .then() sin tipos any implícitos
+    api.post('/reservas', payload)
+      .then((res: { data: any }) => {
+        if (res.data) {
           onReservaExitosa();
           onCerrar();
         }
       })
       .catch((err: any) => {
         console.error('Error al crear la reserva:', err);
-        setError(err?.response?.data?.error || err?.message || 'Error al procesar la reserva. Intenta de nuevo.');
+        setError(err?.response?.data?.message || err?.message || 'Error al procesar la reserva. Intenta de nuevo.');
       })
       .finally(() => {
         setLoading(false);
       });
   };
 
-  const precioTotal = (servicioSeleccionado?.precioBase || 0) + (disenoSeleccionado?.incrementoPrecio || 0);
+  const precioTotal =
+    (servicioSeleccionado?.precioBase || 0) + (disenoSeleccionado?.precioBase || 0);
 
   return (
-    <div className="modal-overlay" onClick={onCerrar}>
-      <div className="modal-card modal-reserva-dialog" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onCerrar} className="modal-close-btn" aria-label="Cerrar">
-          <X size={18} />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between border-b pb-3">
+          <h3 className="text-xl font-semibold text-gray-800">
+            Confirmar Reserva
+          </h3>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+          >
+            ✕
+          </button>
+        </div>
 
-        <div className="modal-reserva-content">
-          <div className="modal-header">
-            <div className="modal-date-badge">
-              <CalendarDays size={14} />
-              {fecha}
-            </div>
-            <h3 className="modal-title">Confirmar Reserva</h3>
-            <p className="modal-subtitle">Completa tus datos para agendar tu cita</p>
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
           </div>
+        )}
 
-          {error && (
-            <div className="banner-aviso-precio">
-              <AlertTriangle size={18} className="banner-aviso-icon" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            {servicios.length > 0 && !servicioInicial && (
-              <div className="modal-section">
-                <div className="section-label-group">
-                  <span className="step-pill">1</span>
-                  <div>
-                    <p className="section-heading">Elige tu servicio</p>
-                    <p className="section-subtext">Selecciona el servicio que deseas agendar</p>
-                  </div>
-                </div>
-                <div className="servicios-cards-grid">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+            {servicios.length > 0 && !servicioInicial ? (
+              <div className="mb-2">
+                <label className="block font-medium text-gray-700">Servicio *</label>
+                <select
+                  required
+                  value={servicioSeleccionado?.id || ''}
+                  onChange={(e) => {
+                    const sel = servicios.find((s) => s.id === e.target.value) || null;
+                    setServicioSeleccionado(sel);
+                  }}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                >
+                  <option value="">Selecciona un servicio</option>
                   {servicios.map((s) => (
-                    <div
-                      key={s.id}
-                      className={`servicio-option-card ${servicioSeleccionado?.id === s.id ? 'activo' : ''}`}
-                      onClick={() => setServicioSeleccionado(s)}
-                    >
-                      <div className="card-top-row">
-                        <span className="card-title">{s.nombre}</span>
-                        {servicioSeleccionado?.id === s.id && <CheckCircle2 size={18} className="check-icon-active" />}
-                      </div>
-                      {s.descripcion && <p className="card-description">{s.descripcion}</p>}
-                      <div className="card-meta-row">
-                        <span className="meta-pill duration">
-                          <Clock size={13} /> {s.duracionMinutos} min
-                        </span>
-                        <span className="meta-pill price">${s.precioBase?.toLocaleString()}</span>
-                      </div>
-                    </div>
+                    <option key={s.id} value={s.id}>
+                      {s.nombre} - ${s.precioBase?.toLocaleString()}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
+            ) : (
+              <p><strong>Servicio:</strong> {servicioSeleccionado?.nombre}</p>
             )}
 
-            <div className="modal-section">
-              <div className="section-label-group">
-                <span className="step-pill">2</span>
-                <div>
-                  <p className="section-heading">Hora de la cita</p>
-                  <p className="section-subtext">Ajusta la hora si lo necesitas</p>
-                </div>
-              </div>
-              <div className="input-with-icon">
-                <Clock size={18} className="input-icon" />
-                <input
-                  type="time"
-                  required
-                  value={hora}
-                  onChange={(e) => setHora(e.target.value)}
-                  className="styled-date-input"
-                />
-              </div>
+            {disenoSeleccionado && (
+              <p><strong>Diseño:</strong> {disenoSeleccionado.nombre}</p>
+            )}
+            <p><strong>Fecha:</strong> {fecha}</p>
+            <div className="mt-2">
+              <label className="block text-xs font-semibold uppercase text-gray-600">Hora *</label>
+              <input
+                type="time"
+                required
+                value={hora}
+                onChange={(e) => setHora(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              />
             </div>
 
-            <div className="modal-section">
-              <div className="section-label-group">
-                <span className="step-pill">3</span>
-                <div>
-                  <p className="section-heading">Tus datos de contacto</p>
-                  <p className="section-subtext">Los usaremos para confirmar tu cita</p>
-                </div>
-              </div>
+            <p className="mt-2 font-semibold text-pink-600">
+              Total estimado: ${precioTotal.toLocaleString()}
+            </p>
+          </div>
 
-              <div className="form-fields-grid">
-                <div className="input-with-icon full-width">
-                  <User size={18} className="input-icon" />
-                  <input
-                    type="text"
-                    required
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    placeholder="Nombre completo *"
-                  />
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Nombre Completo *
+            </label>
+            <input
+              type="text"
+              required
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Ej. María Pérez"
+            />
+          </div>
 
-                <div className="input-with-icon">
-                  <Phone size={18} className="input-icon" />
-                  <input
-                    type="tel"
-                    required
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    placeholder="Teléfono / WhatsApp *"
-                  />
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Teléfono / WhatsApp *
+            </label>
+            <input
+              type="tel"
+              required
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Ej. +57 300 123 4567"
+            />
+          </div>
 
-                <div className="input-with-icon">
-                  <Mail size={18} className="input-icon" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Correo (opcional)"
-                  />
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Correo Electrónico (opcional)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="ejemplo@correo.com"
+            />
+          </div>
 
-                <div className="input-with-icon full-width">
-                  <MessageSquare size={18} className="input-icon" />
-                  <input
-                    type="text"
-                    value={notas}
-                    onChange={(e) => setNotas(e.target.value)}
-                    placeholder="Notas adicionales (opcional)"
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Notas adicionales
+            </label>
+            <textarea
+              rows={2}
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="Alergias, detalles especiales o preferencias..."
+            />
+          </div>
 
-            <div className="modal-reserva-footer">
-              <div className="resumen-rapido-box">
-                {servicioSeleccionado && (
-                  <div className="resumen-linea">
-                    <span>Servicio</span>
-                    <span>{servicioSeleccionado.nombre}</span>
-                  </div>
-                )}
-                {disenoSeleccionado && (
-                  <div className="resumen-linea">
-                    <span>Diseño</span>
-                    <span>{disenoSeleccionado.nombre}</span>
-                  </div>
-                )}
-                <div className="resumen-total-linea">
-                  <span>Total estimado</span>
-                  <span className="precio-total-badge">${precioTotal.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button type="button" onClick={onCerrar} disabled={loading} className="btn-secondary" style={{ flex: 1 }}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={loading} className="btn-primary-action" style={{ flex: 1 }}>
-                  {loading ? 'Confirmando...' : 'Confirmar Cita'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
+          <div className="mt-5 flex justify-end space-x-3 border-t pt-4">
+            <button
+              type="button"
+              onClick={onCerrar}
+              disabled={loading}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-md bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none disabled:opacity-50"
+            >
+              {loading ? 'Confirmando...' : 'Confirmar Cita'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

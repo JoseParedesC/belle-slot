@@ -7,7 +7,6 @@ import { PortalEstilistas } from './pages/estilistas/PortalEstilistas';
 import { MisCitas } from './pages/clientas/MisCitas';
 import { Login } from './pages/admin/Login';
 import { AdminCalendario } from './pages/admin/Calendario';
-import { ConfiguracionDisponibilidad } from './pages/admin/ConfiguracionDisponibilidad';
 
 export default function App() {
   return (
@@ -28,7 +27,6 @@ export default function App() {
               <Route path="/admin/login" element={<Login />} />
               <Route path="/admin/calendario" element={<AdminCalendario />} />
               <Route path="/admin/gestion-citas" element={<AdminCalendario />} />
-              <Route path="/admin/configuracion" element={<ConfiguracionDisponibilidad />} />
 
               {/* Rutas con slug del salón SaaS */}
               <Route path="/:slug" element={<Reservar />} />
@@ -37,7 +35,6 @@ export default function App() {
               <Route path="/:slug/admin/login" element={<Login />} />
               <Route path="/:slug/admin/calendario" element={<AdminCalendario />} />
               <Route path="/:slug/admin/gestion-citas" element={<AdminCalendario />} />
-              <Route path="/:slug/admin/configuracion" element={<ConfiguracionDisponibilidad />} />
             </Routes>
           </div>
         </div>
